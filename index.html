@@ -289,13 +289,14 @@
       inset: 0;
       z-index: -1;
       width: var(--refresh-progress, 0%);
-      background: #d6a700;
+      background: var(--green);
       transition: width 0.10s linear;
       border-radius: inherit;
     }
 
     #statusIndicator {
-      width: 12.6rem;
+      width: 100%;
+      max-width: 100%;
       min-height: 1.55rem;
       margin-top: 0.12rem;
       padding: 0.24rem 0.45rem;
@@ -315,7 +316,7 @@
     }
 
     #statusIndicator.loading {
-      background: #d6a700;
+      background: var(--green);
       color: #222222;
     }
 
@@ -1069,6 +1070,15 @@
       tr.ended-row {
         border-color: transparent;
       }
+
+      tr.ended-row td:last-child {
+        border-bottom: 0 !important;
+      }
+
+      tr.ended-row {
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+      }
       .active-row {
         border: 0.2rem solid var(--green);
       }
@@ -1084,7 +1094,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.17">V1.16</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.18">V1.16</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2225,7 +2235,7 @@
        10 SECOND AUTO REFRESH
        ========================= */
 
-    const AUTO_REFRESH_MS = 10000;
+    const AUTO_REFRESH_MS = 20000;
     let autoRefreshStart = Date.now();
     let autoRefreshTimer = null;
     let autoRefreshRaf = null;
