@@ -1257,7 +1257,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.45">V1.45</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.48">V1.48</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1553,8 +1553,6 @@
       const effectiveWidth = Math.min(550, cssWidth);
       const heightMultiplier = effectiveHeight / EFFECTIVE_HEIGHT_BASELINE;
       const widthMultiplier = Math.min(1, cssWidth / 1000);
-      const dprBoost = dpr < 2.81 ? 1.20 : 1.00;
-      const multiplier = heightMultiplier * dprBoost;
 
       return {
         cssWidth,
@@ -1565,9 +1563,7 @@
         effectiveHeight,
         effectiveWidth,
         heightMultiplier,
-        widthMultiplier,
-        dprBoost,
-        multiplier
+        widthMultiplier
       };
     }
 
@@ -1583,10 +1579,141 @@
       }
     }
 
+    let lastFitMetrics = {
+      sessionSafe: 1,
+      paySafe: 1,
+      applied: 1
+    };
+
+    function withMeasuredView(viewName, candidateMultiplier, measureFn) {
+      const root = document.documentElement;
+      const body = document.body;
+      const main = document.querySelector('main');
+
+      const saved = {
+        fontSize: root.style.fontSize,
+        homeHidden: els.homeView.hidden,
+        payHidden: els.payView.hidden,
+        homeVisibility: els.homeView.style.visibility,
+        payVisibility: els.payView.style.visibility,
+        mainVisibility: main ? main.style.visibility : '',
+        homeActive: body.classList.contains('home-active'),
+        payActive: body.classList.contains('pay-active')
+      };
+
+      root.style.fontSize = `${(16 * candidateMultiplier).toFixed(3)}px`;
+
+      if (main) main.style.visibility = 'hidden';
+      els.homeView.style.visibility = 'hidden';
+      els.payView.style.visibility = 'hidden';
+
+      if (viewName === 'pay') {
+        els.homeView.hidden = true;
+        els.payView.hidden = false;
+        body.classList.remove('home-active');
+        body.classList.add('pay-active');
+      } else {
+        els.payView.hidden = true;
+        els.homeView.hidden = false;
+        body.classList.remove('pay-active');
+        body.classList.add('home-active');
+      }
+
+      const result = measureFn();
+
+      root.style.fontSize = saved.fontSize;
+      els.homeView.hidden = saved.homeHidden;
+      els.payView.hidden = saved.payHidden;
+      els.homeView.style.visibility = saved.homeVisibility;
+      els.payView.style.visibility = saved.payVisibility;
+      if (main) main.style.visibility = saved.mainVisibility;
+
+      body.classList.toggle('home-active', saved.homeActive);
+      body.classList.toggle('pay-active', saved.payActive);
+
+      return result;
+    }
+
+    function isSafeAtMultiplier(viewName, candidateMultiplier) {
+      return withMeasuredView(viewName, candidateMultiplier, () => {
+        const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+        const protectedGap = Math.max(6, rootFont * 0.42);
+
+        if (viewName === 'pay') {
+          const calculator = document.querySelector('#payView .calculator-grid');
+          const dock = document.querySelector('#payView .pay-bottom-dock');
+          if (!calculator || !dock) return true;
+
+          const calculatorBottom = calculator.getBoundingClientRect().bottom;
+          const dockTop = dock.getBoundingClientRect().top;
+          return calculatorBottom + protectedGap <= dockTop;
+        }
+
+        const sessionShell = document.querySelector('#homeView .session-shell');
+        const refreshDock = document.querySelector('#homeView .refresh-dock');
+        if (!sessionShell || !refreshDock) return true;
+
+        const availableSessionHeight =
+          refreshDock.getBoundingClientRect().top -
+          sessionShell.getBoundingClientRect().top;
+
+        const firstRow = sessionShell.querySelector('tbody tr');
+        const minimumSessionHeight = firstRow
+          ? Math.max(firstRow.getBoundingClientRect().height + protectedGap, rootFont * 4.6)
+          : rootFont * 4.6;
+
+        return availableSessionHeight >= minimumSessionHeight;
+      });
+    }
+
+    function findSafeMultiplier(viewName, baseMultiplier) {
+      const minimum = Math.max(1, baseMultiplier);
+      const maximum = minimum * 1.30;
+
+      if (!isSafeAtMultiplier(viewName, minimum)) {
+        return minimum;
+      }
+
+      if (isSafeAtMultiplier(viewName, maximum)) {
+        return maximum;
+      }
+
+      let low = minimum;
+      let high = maximum;
+
+      for (let i = 0; i < 10; i += 1) {
+        const mid = (low + high) / 2;
+        if (isSafeAtMultiplier(viewName, mid)) {
+          low = mid;
+        } else {
+          high = mid;
+        }
+      }
+
+      return low;
+    }
+
+    function calculateSharedFitMultiplier(metrics) {
+      const base = Math.max(1, metrics.heightMultiplier);
+      const sessionSafe = findSafeMultiplier('home', base);
+      const paySafe = findSafeMultiplier('pay', base);
+      const applied = Math.max(base, Math.min(sessionSafe, paySafe));
+
+      lastFitMetrics = {
+        sessionSafe,
+        paySafe,
+        applied
+      };
+
+      return applied;
+    }
+
     function applyViewportScale() {
       const metrics = getViewportMetrics();
-      document.documentElement.style.fontSize = `${(16 * metrics.multiplier).toFixed(3)}px`;
-      document.documentElement.style.setProperty('--ev-global-scale', metrics.multiplier.toFixed(5));
+      const multiplier = calculateSharedFitMultiplier(metrics);
+
+      document.documentElement.style.fontSize = `${(16 * multiplier).toFixed(3)}px`;
+      document.documentElement.style.setProperty('--ev-global-scale', multiplier.toFixed(5));
       document.documentElement.style.setProperty('--ev-view-height', `${metrics.cssHeight}px`);
       document.documentElement.style.setProperty('--ev-effective-height', String(Math.round(metrics.effectiveHeight)));
       document.documentElement.style.setProperty('--ev-effective-width', String(Math.round(metrics.effectiveWidth)));
@@ -1868,8 +1995,8 @@
         <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ ${Number(m.adjDPR || 1).toFixed(2)}</div>
         <div>EFFECTIVE ${Math.round(m.effectiveWidth)} × ${Math.round(m.effectiveHeight)}</div>
         <div>H MULT ${Number(m.heightMultiplier || 0).toFixed(3)}</div>
-        <div>DPR BOOST ${Number(m.dprBoost || 1).toFixed(2)}×</div>
-        <div>APPLIED ${Number(m.multiplier || 0).toFixed(3)}</div>
+        <div>SAFE SESS ${Number(lastFitMetrics.sessionSafe || 1).toFixed(3)} • PAY ${Number(lastFitMetrics.paySafe || 1).toFixed(3)}</div>
+        <div>APPLIED ${Number(lastFitMetrics.applied || 1).toFixed(3)}</div>
         <div>ASPECT ${aspect.toFixed(3)} • ${orientation}</div>
         <div>CURRENT VIEW ${activeView}</div>
       `;
@@ -1889,7 +2016,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.45';
+      els.revisionBox.textContent = 'V1.48';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2513,6 +2640,8 @@
         if (showPay) {
           preloadPayCalculators();
         }
+
+        applyViewportScale();
 
         requestAnimationFrame(() => {
           els.curtain.classList.remove('covered');
