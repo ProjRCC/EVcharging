@@ -27,6 +27,7 @@
 
   <style>
     :root {
+      --gray-2: #d7d7d7;
       --gray-7: #444444;
       --gray-8: #333333;
       --gray-9: #222222;
@@ -95,6 +96,7 @@
       max-width: 900px;
       margin: 0 auto;
       padding: 0.75rem 0.75rem 1rem;
+      padding-bottom: calc(6.4rem + env(safe-area-inset-bottom));
     }
 
     .view {
@@ -140,24 +142,22 @@
     }
 
     .field {
-      width: 90%;
-      max-width: 16rem;
-      margin: 0 0 0.72rem;
-      padding: 0.66rem 0.72rem;
-      border: 1px solid #5e5e5e;
+      width: 100%;
+      max-width: 30rem;
+      min-height: 3.1rem;
+      padding: 0.78rem 0.9rem;
+      border: 1px solid #bdbdbd;
       border-radius: 0.68rem;
-      background: var(--gray-8);
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 1.08rem;
-      line-height: 1.15;
+      background: var(--gray-2);
+      color: #2a2a2a;
       text-align: center;
+      font-size: 0.98rem;
+      font-weight: 900;
       box-shadow: var(--shadow-soft);
     }
 
     .field::placeholder {
-      color: #cfcfcf;
-      opacity: 1;
+      color: #666666;
     }
 
     .field:disabled {
@@ -251,10 +251,10 @@
     }
 
     .authorization-note {
-      width: min(92%, 28rem);
-      margin: -0.15rem auto 0.75rem;
+      width: min(94%, 34rem);
+      margin: 0.2rem auto 0.82rem;
       color: #e4e4e4;
-      font-size: 0.68rem;
+      font-size: 0.84rem;
       font-weight: 700;
       line-height: 1.25;
       text-align: center;
@@ -373,19 +373,25 @@
     }
 
     .bottom-actions {
-      width: 100%;
-      max-width: 34rem;
-      margin: 0.85rem auto 0;
+      position: fixed;
+      left: 50%;
+      bottom: calc(0.65rem + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      z-index: 50;
+      width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
+      margin: 0;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 3fr;
       gap: 0.72rem;
+      align-items: stretch;
     }
 
     .bottom-actions .action-button,
     .bottom-actions .link-button {
       width: 100%;
       min-width: 0;
-      padding: 0.9rem 0.5rem;
+      min-height: 3.3rem;
+      padding: 0.9rem 0.45rem;
     }
 
     /* PAY VIEW */
@@ -414,6 +420,17 @@
       box-shadow: var(--shadow-soft);
     }
 
+    .calculator-heading {
+      width: 100%;
+      margin: 0 auto 0.55rem;
+      color: #ffffff;
+      font-size: 0.92rem;
+      font-weight: 900;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
     .pay-warning strong {
       display: block;
       margin-top: 0.28rem;
@@ -427,8 +444,20 @@
       max-width: 42rem;
       margin: 0 auto 1rem;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
       gap: 0.72rem;
+      align-items: center;
+    }
+
+    .calculator-or {
+      align-self: center;
+      justify-self: center;
+      padding: 0.38rem 0.28rem;
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1;
+      text-transform: uppercase;
     }
 
     .calculator-card {
@@ -750,7 +779,7 @@
       </form>
 
       <div id="authorizationNote" class="authorization-note" hidden>
-        Scan the charger USER or MASTER QR to add or manage a charging session.
+        Scan the charger QR to add or manage a charging session.
       </div>
 
       <div class="table-container">
@@ -775,15 +804,15 @@
       </div>
 
       <div class="bottom-actions">
-        <button id="payButton" class="action-button" type="button">Pay</button>
         <a
           id="passwordButton"
           class="link-button"
           href="https://wa.me/qr/VXCAX53DGUGMJ1?s=v"
           target="_blank"
           rel="noopener noreferrer">
-          Password
+          Lock Code
         </a>
+        <button id="payButton" class="action-button" type="button">Pay</button>
       </div>
     </section>
 
@@ -801,6 +830,8 @@
         Access codes may be changed to enforce suspension.
       </div>
 
+      <div class="calculator-heading">Calculator</div>
+
       <div class="calculator-grid">
         <section class="calculator-card" aria-label="Pay by kilowatt hour calculator">
           <h2 class="calculator-title">Pay by Energy</h2>
@@ -812,11 +843,14 @@
             min="0"
             step="0.1"
             inputmode="decimal"
+            enterkeyhint="done"
             placeholder="kWh Added"
             aria-label="Kilowatt hours added">
           <div class="calculator-result-label">Amount</div>
           <div id="kwhResult" class="calculator-result">$0.00</div>
         </section>
+
+        <div class="calculator-or" aria-hidden="true">OR</div>
 
         <section class="calculator-card" aria-label="Pay by time calculator">
           <h2 class="calculator-title">Pay by Time</h2>
@@ -828,6 +862,7 @@
             min="0"
             step="0.5"
             inputmode="decimal"
+            enterkeyhint="done"
             placeholder="Hours"
             aria-label="Approximate charging hours">
           <div class="calculator-result-label">Amount</div>
@@ -1044,7 +1079,7 @@
       els.submit.disabled = !authorized;
       els.authNote.hidden = authorized;
       els.masterZone.classList.toggle('visible', currentRole === 'master');
-      els.revisionBox.textContent = currentRole === 'master' ? 'V1 M' : currentRole === 'user' ? 'V1 U' : 'V1';
+      els.revisionBox.textContent = 'V1';
       renderTable();
     }
 
@@ -1294,7 +1329,7 @@
 
     async function submitEntry() {
       if (currentRole !== 'user' && currentRole !== 'master') {
-        showAlert('Scan the charger USER or MASTER QR to submit a charging session.');
+        showAlert('Scan the charger QR to submit a charging session.');
         return;
       }
 
@@ -1605,6 +1640,15 @@
     els.kwhInput.addEventListener('input', updatePayCalculators);
     els.payHoursInput.addEventListener('input', updatePayCalculators);
 
+    [els.kwhInput, els.payHoursInput].forEach(input => {
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          input.blur();
+        }
+      });
+    });
+
     /* =========================
        INITIAL STATE
        ========================= */
@@ -1632,4 +1676,3 @@
   </script>
 </body>
 </html>
-
