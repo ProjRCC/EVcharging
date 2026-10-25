@@ -847,7 +847,7 @@
         text-align: left;
       }
 
-      td:last-child {
+      td.action-cell {
         min-height: 2.3rem;
         visibility: visible;
         opacity: 1;
@@ -860,7 +860,7 @@
         text-align: center;
       }
 
-      td:last-child::before {
+      td.action-cell::before {
         display: none;
       }
 
@@ -879,7 +879,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.5">V1.5</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.5">V1.6</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1210,13 +1210,14 @@
     }
 
     function applyAuthorizationUI() {
-      const hasQrAccess = Boolean(currentToken) || currentRole === 'user' || currentRole === 'master';
-      els.name.disabled = !hasQrAccess;
-      els.hours.disabled = !hasQrAccess;
-      els.submit.disabled = !hasQrAccess;
+      /* USER controls are always interactive in the frontend. Cloudflare is the
+         authority for mutations; MASTER-only DELETE ALL remains role-gated. */
+      els.name.disabled = false;
+      els.hours.disabled = false;
+      els.submit.disabled = false;
       if (els.authNote) els.authNote.hidden = true;
       els.masterZone.classList.toggle('visible', currentRole === 'master');
-      els.revisionBox.textContent = 'V1.5';
+      els.revisionBox.textContent = 'V1.6';
       renderTable();
     }
 
@@ -1469,11 +1470,6 @@
        ========================= */
 
     async function submitEntry() {
-      if (!currentToken && currentRole !== 'user' && currentRole !== 'master') {
-        showAlert('Scan the charger QR to submit a charging session.');
-        return;
-      }
-
       const name = els.name.value.trim();
       const hoursValue = els.hours.value.trim();
       els.hours.blur();
@@ -1526,7 +1522,7 @@
         setStatusError('SAVE FAILED');
         showAlert(error.message || 'Error saving session.');
       } finally {
-        els.submit.disabled = !(currentToken || currentRole === 'user' || currentRole === 'master');
+        els.submit.disabled = false;
       }
     }
 
@@ -1547,8 +1543,6 @@
        ========================= */
 
     async function endSession(start) {
-      if (!currentToken && currentRole !== 'user' && currentRole !== 'master') return;
-
       markRowBusy(start, 'ENDING');
       stopCurrentLoad();
       setStatusLoading('ENDING');
@@ -1568,8 +1562,6 @@
     }
 
     function deleteEntry(start) {
-      if (!currentToken && currentRole !== 'user' && currentRole !== 'master') return;
-
       showConfirm(
         'DELETE ACTIVE SESSION? It will be archived first.',
         'Delete',
@@ -1636,7 +1628,7 @@
         if (row.getAttribute('data-start') === start) {
           row.classList.remove('active-row');
           const timeCell = row.querySelector('td[data-label="Time Left"]');
-          const actionCell = row.querySelector('td[data-label=""]');
+          const actionCell = row.querySelector('td.action-cell');
           if (timeCell) timeCell.innerHTML = `<b style="font-size:1.25em">${escapeHtml(label)}</b>`;
           if (actionCell) actionCell.innerHTML = '';
           break;
@@ -1670,7 +1662,7 @@
     function renderTable() {
       els.tbody.innerHTML = '';
       const nowMs = Date.now();
-      const authorized = Boolean(currentToken) || currentRole === 'user' || currentRole === 'master';
+      const authorized = true;
 
       currentData.forEach(entry => {
         const startDate = new Date(entry.Start);
@@ -1710,7 +1702,7 @@
           <td data-label="Start">${formattedStart}</td>
           <td data-label="End">${formattedEnd}</td>
           <td data-label="Time Left">${formatTimeLeft(remainingMs)}</td>
-          <td data-label="">${actions}</td>
+          ${active ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
         `;
 
         if (active && authorized) {
