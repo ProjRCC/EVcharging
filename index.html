@@ -567,6 +567,13 @@
 
     .rotate-portrait-overlay.show {
       display: flex;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .rotate-portrait-overlay.show .rotate-portrait-box {
+      opacity: 1;
     }
 
     .rotate-portrait-box {
@@ -1257,7 +1264,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.50">V1.50</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.51">V1.51</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2028,7 +2035,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.50';
+      els.revisionBox.textContent = 'V1.51';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
