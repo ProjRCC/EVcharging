@@ -196,10 +196,19 @@
     }
 
     .field:focus,
-    .field:focus-visible {
+    .field:focus-visible,
+    .field:active,
+    .field:-webkit-autofill,
+    .field:-webkit-autofill:hover,
+    .field:-webkit-autofill:focus {
+      outline: none !important;
       background: var(--gray-2) !important;
+      background-color: var(--gray-2) !important;
       color: #2a2a2a !important;
+      -webkit-text-fill-color: #2a2a2a !important;
       border-color: #bdbdbd !important;
+      box-shadow: var(--shadow-soft), 0 0 0 1000px var(--gray-2) inset !important;
+      caret-color: #2a2a2a !important;
     }
 
     .field::selection,
@@ -951,7 +960,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.9">V1.9</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.10">V1.10</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1296,7 +1305,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.9';
+      els.revisionBox.textContent = 'V1.10';
       renderTable();
     }
 
@@ -1781,10 +1790,10 @@
         if (active) row.classList.add('active-row');
         row.setAttribute('data-start', entry.Start);
 
-        const actions = authorized
+        const actions = active && authorized
           ? `<div class="row-action-group">
                <button class="mini-button delete" type="button" data-action="delete">X</button>
-               ${active ? '<button class="mini-button end" type="button" data-action="end">End</button>' : ''}
+               <button class="mini-button end" type="button" data-action="end">End</button>
              </div>`
           : '';
 
@@ -1793,10 +1802,10 @@
           <td data-label="Start">${formattedStart}</td>
           <td data-label="End">${formattedEnd}</td>
           <td data-label="Time Left">${formatTimeLeft(remainingMs)}</td>
-          ${authorized ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
+          ${active && authorized ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
         `;
 
-        if (authorized) {
+        if (active && authorized) {
           const deleteButton = row.querySelector('[data-action="delete"]');
           const endButton = row.querySelector('[data-action="end"]');
           if (deleteButton) deleteButton.addEventListener('click', () => deleteEntry(entry.Start));
