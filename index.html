@@ -171,7 +171,7 @@
       border: 0;
       background: transparent;
       color: #cfcfcf;
-      font-size: 0.70rem;
+      font-size: 0.76rem;
       font-weight: 900;
       line-height: 1;
       text-align: right;
@@ -965,7 +965,7 @@
     }
 
     .control-center-box {
-      width: min(94vw, 32rem);
+      width: min(92vw, 24rem);
       padding: 1rem;
       border-radius: 1rem;
       background: var(--gray-8);
@@ -984,7 +984,7 @@
 
     .control-center-screen {
       margin-bottom: var(--home-gap);
-      padding: 0.76rem;
+      padding: 0.68rem;
       border-radius: 0.78rem;
       background: #2f2f2f;
       text-align: left;
@@ -1018,12 +1018,6 @@
     .control-center-screen-button.active {
       outline: 0.15rem solid #ffffff;
       outline-offset: 0.08rem;
-    }
-
-    .screen-info-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.55rem;
     }
 
     .screen-info-card {
@@ -1259,7 +1253,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.36">V1.36</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.37">V1.37</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1425,18 +1419,8 @@
       <div class="control-center-screen">
         <div class="control-center-section-title">SCREEN INFO</div>
 
-        <div class="screen-info-grid">
-          <div class="screen-info-card">
-            <div class="screen-info-name">SESSIONS SCREEN</div>
-            <div id="ccSessionsInfo" class="screen-info-lines"></div>
-          </div>
-          </div>
-
-          <div class="screen-info-card">
-            <div class="screen-info-name">PAY SCREEN</div>
-            <div id="ccPayInfo" class="screen-info-lines"></div>
-          </div>
-          </div>
+        <div class="screen-info-card">
+          <div id="ccCompactInfo" class="screen-info-lines"></div>
         </div>
       </div>
 
@@ -1516,8 +1500,7 @@
       ccMaster: document.getElementById('ccMaster'),
       ccRegular: document.getElementById('ccRegular'),
       ccClose: document.getElementById('ccClose'),
-      ccSessionsInfo: document.getElementById('ccSessionsInfo'),
-      ccPayInfo: document.getElementById('ccPayInfo'),
+      ccCompactInfo: document.getElementById('ccCompactInfo'),
       form: document.getElementById('chargingForm'),
       name: document.getElementById('name'),
       hours: document.getElementById('hours'),
@@ -1844,29 +1827,23 @@
       };
     }
 
-    function formatDiagnosticSnapshot(s) {
-      return `
-        <div>VIEW ${s.cssWidth} × ${s.cssHeight} CSS px</div>
-        <div>VISUAL ${s.visualWidth} × ${s.visualHeight} • SCALE ${s.visualScale.toFixed(2)}</div>
-        <div>INNER ${s.innerWidth} × ${s.innerHeight}</div>
-        <div>OUTER ${s.outerWidth} × ${s.outerHeight}</div>
-        <div>SCREEN ${s.screenWidth} × ${s.screenHeight}</div>
-        <div>AVAILABLE ${s.availWidth} × ${s.availHeight}</div>
-        <div>DPR ${s.dpr.toFixed(2)} • ADJ DPR ${s.adjDPR.toFixed(2)}</div>
-        <div>EFFECTIVE W ${s.effectiveWidth} • H ${s.effectiveHeight}</div>
-        <div>WIDTH MULT ${s.widthMultiplier.toFixed(3)}</div>
-        <div>HEIGHT MULT ${s.heightMultiplier.toFixed(3)}</div>
-        <div>APPLIED MULT ${s.appliedMultiplier.toFixed(3)}</div>
-        <div>ASPECT ${s.aspect.toFixed(3)} • ${s.orientation}</div>
-        <div>CONTENT ${s.renderedWidth} × ${s.renderedHeight}</div>
-        <div>SCROLL ${s.scrollWidth} × ${s.scrollHeight}</div>
-        <div>VISUAL OFFSET ${s.offsetLeft}, ${s.offsetTop}</div>
-      `;
-    }
-
     function renderScreenInfo() {
-      els.ccSessionsInfo.innerHTML = formatDiagnosticSnapshot(makeDiagnosticSnapshot('home'));
-      els.ccPayInfo.innerHTML = formatDiagnosticSnapshot(makeDiagnosticSnapshot('pay'));
+      const m = getViewportMetrics();
+      const vv = getVisualViewportMetrics();
+      const aspect = m.cssHeight ? (m.cssWidth / m.cssHeight) : 0;
+      const orientation = m.cssWidth >= m.cssHeight ? 'LANDSCAPE' : 'PORTRAIT';
+      const activeView = currentView === 'pay' ? 'PAY' : 'SESSIONS';
+
+      els.ccCompactInfo.innerHTML = `
+        <div>VIEW ${Math.round(m.cssWidth)} × ${Math.round(m.cssHeight)} CSS px</div>
+        <div>VISUAL ${Math.round(vv.width)} × ${Math.round(vv.height)} • SCALE ${Number(vv.scale || 1).toFixed(2)}</div>
+        <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ ${Number(m.adjDPR || 1).toFixed(2)}</div>
+        <div>EFFECTIVE ${Math.round(m.effectiveWidth)} × ${Math.round(m.effectiveHeight)}</div>
+        <div>W MULT ${Number(m.widthMultiplier || 0).toFixed(3)} • H MULT ${Number(m.heightMultiplier || 0).toFixed(3)}</div>
+        <div>APPLIED ${Number(m.multiplier || 0).toFixed(3)}</div>
+        <div>ASPECT ${aspect.toFixed(3)} • ${orientation}</div>
+        <div>CURRENT VIEW ${activeView}</div>
+      `;
     }
 
     function applyAuthorizationUI() {
@@ -1883,7 +1860,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.36';
+      els.revisionBox.textContent = 'V1.37';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
