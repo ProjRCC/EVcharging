@@ -277,6 +277,23 @@
       padding: 0.9rem 0.7rem;
     }
 
+
+    #statusIndicator {
+      position: relative;
+      isolation: isolate;
+    }
+
+    #statusIndicator::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      width: var(--refresh-progress, 0%);
+      background: #d6a700;
+      transition: width 0.10s linear;
+      border-radius: inherit;
+    }
+
     #statusIndicator {
       width: 12.6rem;
       min-height: 1.55rem;
@@ -452,7 +469,7 @@
       width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
       margin: 0;
       display: grid;
-      grid-template-columns: 1fr 3fr;
+      grid-template-columns: 3fr 7fr;
       gap: 0.72rem;
       align-items: stretch;
     }
@@ -467,6 +484,7 @@
 
 
     .bottom-actions .link-button {
+      background: var(--red);
       text-align: center;
       line-height: 1.02;
       white-space: normal;
@@ -1047,6 +1065,10 @@
         display: none;
       }
 
+
+      tr.ended-row {
+        border-color: transparent;
+      }
       .active-row {
         border: 0.2rem solid var(--green);
       }
@@ -1062,7 +1084,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.16">V1.16</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.17">V1.16</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1124,7 +1146,7 @@
           href="https://wa.me/qr/VXCAX53DGUGMJ1?s=v"
           target="_blank"
           rel="noopener noreferrer">
-          Lock Code
+          Request Lock Code
         </a>
         <button id="payButton" class="action-button" type="button">Pay</button>
       </div>
@@ -1703,6 +1725,7 @@
     }
 
     function openHoursPicker() {
+      restartAutoRefresh();
       const current = parseFloat(String(els.hours.value || '').replace(/[^0-9.\-]/g, ''));
       pickerHours = clampHours(Number.isFinite(current) && current > 0 ? current : rememberedHours());
       paintHoursPicker();
@@ -1722,8 +1745,8 @@
 
     els.hours.addEventListener('click', openHoursPicker);
     els.hours.addEventListener('focus', openHoursPicker);
-    els.hoursMinus.addEventListener('click', () => { pickerHours = clampHours(pickerHours - 0.5); paintHoursPicker(); });
-    els.hoursPlus.addEventListener('click', () => { pickerHours = clampHours(pickerHours + 0.5); paintHoursPicker(); });
+    els.hoursMinus.addEventListener('click', () => { restartAutoRefresh(); pickerHours = clampHours(pickerHours - 0.5); paintHoursPicker(); });
+    els.hoursPlus.addEventListener('click', () => { restartAutoRefresh(); pickerHours = clampHours(pickerHours + 0.5); paintHoursPicker(); });
     els.hoursDone.addEventListener('click', () => {
       const shouldSubmit = Boolean(els.name.value.trim());
       closeHoursPicker(true);
@@ -1972,6 +1995,7 @@
 
         const row = document.createElement('tr');
         if (active) row.classList.add('active-row');
+        else row.classList.add('ended-row');
         row.setAttribute('data-start', entry.Start);
 
         const canDelete = active || currentRole === 'master';
@@ -2196,6 +2220,37 @@
       window.visualViewport.addEventListener('scroll', syncKeyboardState, { passive: true });
     }
 
+
+    /* =========================
+       10 SECOND AUTO REFRESH
+       ========================= */
+
+    const AUTO_REFRESH_MS = 10000;
+    let autoRefreshStart = Date.now();
+    let autoRefreshTimer = null;
+    let autoRefreshRaf = null;
+
+    function restartAutoRefresh() {
+      autoRefreshStart = Date.now();
+      if (autoRefreshTimer) clearTimeout(autoRefreshTimer);
+      autoRefreshTimer = window.setTimeout(async () => {
+        if (currentView === 'home' && !els.hoursPicker.classList.contains('open')) {
+          await loadData({ tokenCandidate: currentToken });
+        }
+        restartAutoRefresh();
+      }, AUTO_REFRESH_MS);
+    }
+
+    function paintAutoRefreshProgress() {
+      const elapsed = Date.now() - autoRefreshStart;
+      const pct = Math.max(0, Math.min(100, (elapsed / AUTO_REFRESH_MS) * 100));
+      els.status.style.setProperty('--refresh-progress', `${pct}%`);
+      autoRefreshRaf = requestAnimationFrame(paintAutoRefreshProgress);
+    }
+
+    document.addEventListener('pointerdown', () => restartAutoRefresh(), { passive: true });
+    document.addEventListener('touchstart', () => restartAutoRefresh(), { passive: true });
+
     /* =========================
        INITIAL STATE
        ========================= */
@@ -2230,6 +2285,8 @@
 
     const startupToken = currentToken;
     loadData({ tokenCandidate: startupToken, startup: true });
+    restartAutoRefresh();
+    paintAutoRefreshProgress();
 
     /* Keep Time Left accurate locally without any Google/Cloudflare refresh. */
     window.setInterval(() => {
