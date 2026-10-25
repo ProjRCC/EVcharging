@@ -559,7 +559,9 @@
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      background: rgba(0, 0, 0, 0.58);
+      background: rgba(35, 35, 35, 0.42);
+      backdrop-filter: blur(0.28rem);
+      -webkit-backdrop-filter: blur(0.28rem);
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -576,8 +578,10 @@
       width: min(92vw, 22rem);
       padding: 1rem;
       border-radius: 1rem;
-      background: var(--gray-7);
-      box-shadow: var(--shadow);
+      background: rgba(102, 102, 102, 0.90);
+      backdrop-filter: blur(0.42rem);
+      -webkit-backdrop-filter: blur(0.42rem);
+      box-shadow: 0 0.55rem 1.45rem rgba(0, 0, 0, 0.42);
       text-align: center;
     }
 
@@ -837,8 +841,8 @@
 
     .payment-link {
       min-width: 0;
-      min-height: 3.75rem;
-      padding: 0.60rem 0.35rem;
+      min-height: 4.65rem;
+      padding: 0.78rem 0.35rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -852,21 +856,21 @@
     }
 
     .payment-mark {
-      width: 1.68rem;
-      height: 1.68rem;
+      width: 1.95rem;
+      height: 1.95rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
       background: var(--blue);
       color: #ffffff;
-      font-size: 1.05rem;
+      font-size: 1.18rem;
       font-weight: 900;
       line-height: 1;
     }
 
     .payment-name {
-      font-size: 0.78rem;
+      font-size: 0.86rem;
       font-weight: 900;
       line-height: 1;
       text-transform: uppercase;
@@ -1058,7 +1062,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.13">V1.13</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.14">V1.14</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1183,7 +1187,7 @@
       <div class="payment-links">
         <a
           class="payment-link"
-          href="https://venmo.com/code?user_id=3056409608454144424&created=1792848287"
+          href="https://venmo.com/code?user_id=3056409608454144424&created=1792935539"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Pay with Venmo">
@@ -1419,7 +1423,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.13';
+      els.revisionBox.textContent = 'V1.14';
       renderTable();
     }
 
@@ -1699,7 +1703,7 @@
     }
 
     function openHoursPicker() {
-      const current = Number(els.hours.value);
+      const current = parseFloat(String(els.hours.value || '').replace(/[^0-9.\-]/g, ''));
       pickerHours = clampHours(Number.isFinite(current) && current > 0 ? current : rememberedHours());
       paintHoursPicker();
       els.hoursPicker.classList.add('open');
@@ -1707,7 +1711,10 @@
     }
 
     function closeHoursPicker(commit = false) {
-      if (commit) els.hours.value = pickerHours.toFixed(1).replace(/\.0$/, '');
+      if (commit) {
+        const displayHours = pickerHours.toFixed(1).replace(/\.0$/, '');
+        els.hours.value = `${displayHours} Hours`;
+      }
       els.hoursPicker.classList.remove('open');
       els.hoursPicker.setAttribute('aria-hidden', 'true');
     }
@@ -1741,7 +1748,7 @@
         return;
       }
 
-      const hours = Number(hoursValue);
+      const hours = parseFloat(hoursValue.replace(/[^0-9.\-]/g, ''));
       if (!Number.isFinite(hours) || hours <= 0) {
         showAlert('Please enter valid Hours greater than 0.');
         return;
@@ -1939,10 +1946,12 @@
         if (active) row.classList.add('active-row');
         row.setAttribute('data-start', entry.Start);
 
-        const actions = active && authorized
+        const canDelete = active || currentRole === 'master';
+        const canEnd = active;
+        const actions = (canDelete || canEnd)
           ? `<div class="row-action-group">
-               <button class="mini-button delete" type="button" data-action="delete">X</button>
-               <button class="mini-button end" type="button" data-action="end">End</button>
+               ${canDelete ? `<button class="mini-button delete" type="button" data-action="delete">X</button>` : ''}
+               ${canEnd ? `<button class="mini-button end" type="button" data-action="end">End</button>` : ''}
              </div>`
           : '';
 
@@ -1951,10 +1960,10 @@
           <td data-label="Start">${formattedStart}</td>
           <td data-label="End">${formattedEnd}</td>
           <td data-label="Time Left">${formatTimeLeft(remainingMs)}</td>
-          ${active && authorized ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
+          ${(canDelete || canEnd) ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
         `;
 
-        if (active && authorized) {
+        if (canDelete || canEnd) {
           const deleteButton = row.querySelector('[data-action="delete"]');
           const endButton = row.querySelector('[data-action="end"]');
           if (deleteButton) deleteButton.addEventListener('click', () => deleteEntry(entry.Start));
@@ -2030,11 +2039,31 @@
       els.hoursResult.textContent = money(hours > 0 ? hours * 2.00 : 0);
     }
 
+    function payUnitSuffix(input) {
+      return input === els.kwhInput ? ' kWh Added' : ' Hrs';
+    }
+
     function clearPayPreload(input) {
       if (!input.classList.contains('preloaded')) return;
       input.value = '';
       input.classList.remove('preloaded');
       updatePayCalculators();
+    }
+
+    function preparePayFieldForEditing(input) {
+      if (input.classList.contains('preloaded')) {
+        clearPayPreload(input);
+        return;
+      }
+      const value = numericFieldValue(input);
+      if (value > 0) input.value = String(value);
+    }
+
+    function formatPayField(input) {
+      const value = numericFieldValue(input);
+      if (!(value > 0)) return;
+      const text = Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
+      input.value = `${text}${payUnitSuffix(input)}`;
     }
 
     function preloadPayCalculators() {
@@ -2048,7 +2077,7 @@
         const hoursText = Number.isInteger(submittedHours) ? String(submittedHours) : String(submittedHours);
         const kwhText = Number.isInteger(kwh) ? String(kwh) : String(Math.round(kwh * 10) / 10);
         els.kwhInput.value = `${kwhText} kWh Added`;
-        els.payHoursInput.value = `${hoursText} Hours`;
+        els.payHoursInput.value = `${hoursText} Hrs`;
         els.kwhInput.classList.add('preloaded');
         els.payHoursInput.classList.add('preloaded');
       } else {
@@ -2061,10 +2090,16 @@
     }
 
     [els.kwhInput, els.payHoursInput].forEach(input => {
-      input.addEventListener('pointerdown', () => clearPayPreload(input), { passive: true });
-      input.addEventListener('focus', () => clearPayPreload(input));
+      input.addEventListener('pointerdown', () => {
+        if (input.classList.contains('preloaded')) clearPayPreload(input);
+      }, { passive: true });
+      input.addEventListener('focus', () => preparePayFieldForEditing(input));
       input.addEventListener('input', () => {
         input.classList.remove('preloaded');
+        updatePayCalculators();
+      });
+      input.addEventListener('blur', () => {
+        formatPayField(input);
         updatePayCalculators();
       });
     });
