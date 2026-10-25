@@ -1069,15 +1069,12 @@
 
       tr.ended-row {
         border-color: transparent;
+        box-shadow: none !important;
+        overflow: hidden;
       }
 
       tr.ended-row td:last-child {
         border-bottom: 0 !important;
-      }
-
-      tr.ended-row {
-        box-shadow: var(--shadow-soft);
-        overflow: hidden;
       }
       .active-row {
         border: 0.2rem solid var(--green);
@@ -1094,7 +1091,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.19">V1.16</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.20">V1.20</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1455,7 +1452,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.16';
+      els.revisionBox.textContent = 'V1.20';
       renderTable();
     }
 
@@ -2260,7 +2257,7 @@
         return Number.isFinite(endMs) && endMs > nowMs;
       });
       els.status.style.setProperty('--refresh-progress', `${pct}%`);
-      els.status.style.setProperty('--refresh-fill', hasActiveSession ? 'var(--green)' : '#666666');
+      els.status.style.setProperty('--refresh-fill', hasActiveSession ? 'var(--green)' : 'var(--gray-2)');
       autoRefreshRaf = requestAnimationFrame(paintAutoRefreshProgress);
     }
 
