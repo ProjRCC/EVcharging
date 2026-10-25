@@ -965,7 +965,7 @@
     }
 
     .control-center-box {
-      width: min(92vw, 24rem);
+      width: min(94vw, 32rem);
       padding: 1rem;
       border-radius: 1rem;
       background: var(--gray-8);
@@ -1259,7 +1259,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.35">V1.35</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.36">V1.36</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1425,24 +1425,17 @@
       <div class="control-center-screen">
         <div class="control-center-section-title">SCREEN INFO</div>
 
-        <div class="control-center-screen-actions">
-          <button id="ccScreenStart" class="control-center-screen-button" type="button">START</button>
-          <button id="ccScreenCopy" class="control-center-screen-button" type="button">COPY</button>
-        </div>
-
         <div class="screen-info-grid">
           <div class="screen-info-card">
-            <div class="screen-info-name">SESSIONS</div>
-            <div id="ccSessionsInfo" class="screen-info-lines">
-              <div class="screen-info-pending">Press START to capture</div>
-            </div>
+            <div class="screen-info-name">SESSIONS SCREEN</div>
+            <div id="ccSessionsInfo" class="screen-info-lines"></div>
+          </div>
           </div>
 
           <div class="screen-info-card">
-            <div class="screen-info-name">PAY</div>
-            <div id="ccPayInfo" class="screen-info-lines">
-              <div class="screen-info-pending">Press START, then visit PAY</div>
-            </div>
+            <div class="screen-info-name">PAY SCREEN</div>
+            <div id="ccPayInfo" class="screen-info-lines"></div>
+          </div>
           </div>
         </div>
       </div>
@@ -1523,8 +1516,6 @@
       ccMaster: document.getElementById('ccMaster'),
       ccRegular: document.getElementById('ccRegular'),
       ccClose: document.getElementById('ccClose'),
-      ccScreenStart: document.getElementById('ccScreenStart'),
-      ccScreenCopy: document.getElementById('ccScreenCopy'),
       ccSessionsInfo: document.getElementById('ccSessionsInfo'),
       ccPayInfo: document.getElementById('ccPayInfo'),
       form: document.getElementById('chargingForm'),
@@ -1608,7 +1599,6 @@
       viewportRaf = requestAnimationFrame(() => {
         viewportRaf = 0;
         applyViewportScale();
-        requestAnimationFrame(captureCurrentViewMetrics);
       });
     }
 
@@ -1697,6 +1687,7 @@
       renderScreenInfo();
       els.controlCenter.classList.add('open');
       els.controlCenter.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(renderScreenInfo);
     }
 
     function requestControlCenterAccess() {
@@ -1763,139 +1754,119 @@
     }
 
 
-    let screenCaptureRunning = false;
-    const screenSnapshots = {
-      home: null,
-      pay: null
-    };
-
     function getVisualViewportMetrics() {
       const vv = window.visualViewport;
       return {
         width: vv ? vv.width : window.innerWidth,
         height: vv ? vv.height : window.innerHeight,
-        scale: vv ? vv.scale : 1
+        scale: vv ? vv.scale : 1,
+        offsetLeft: vv ? vv.offsetLeft : 0,
+        offsetTop: vv ? vv.offsetTop : 0
       };
     }
 
-    function getRenderedViewMetrics(viewName) {
-      const target = viewName === 'pay' ? els.payView : els.homeView;
-      if (!target) return { width: 0, height: 0, pageHeight: 0 };
+    function measureView(viewName) {
+      const source = viewName === 'pay' ? els.payView : els.homeView;
+      if (!source) return { width: 0, height: 0, scrollWidth: 0, scrollHeight: 0 };
 
-      const rect = target.getBoundingClientRect();
-      return {
-        width: Math.round(rect.width),
-        height: Math.round(rect.height),
-        pageHeight: Math.round(Math.max(
-          document.documentElement.scrollHeight || 0,
-          document.body.scrollHeight || 0
-        ))
+      if (getComputedStyle(source).display !== 'none') {
+        const r = source.getBoundingClientRect();
+        return {
+          width: Math.round(r.width),
+          height: Math.round(r.height),
+          scrollWidth: Math.round(source.scrollWidth || 0),
+          scrollHeight: Math.round(source.scrollHeight || 0)
+        };
+      }
+
+      const clone = source.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('[id]').forEach(node => node.removeAttribute('id'));
+      clone.style.position = 'fixed';
+      clone.style.left = '-100000px';
+      clone.style.top = '0';
+      clone.style.display = 'block';
+      clone.style.visibility = 'hidden';
+      clone.style.pointerEvents = 'none';
+      clone.style.width = `${Math.min(window.innerWidth, 1000)}px`;
+      clone.style.maxWidth = '1000px';
+      clone.style.height = 'auto';
+      clone.style.minHeight = '0';
+      clone.style.transform = 'none';
+      clone.style.zIndex = '-1';
+
+      document.body.appendChild(clone);
+      const r = clone.getBoundingClientRect();
+      const measured = {
+        width: Math.round(r.width),
+        height: Math.round(r.height),
+        scrollWidth: Math.round(clone.scrollWidth || 0),
+        scrollHeight: Math.round(clone.scrollHeight || 0)
       };
+      clone.remove();
+      return measured;
     }
 
-    function makeScreenSnapshot(viewName) {
+    function makeDiagnosticSnapshot(viewName) {
       const m = getViewportMetrics();
       const vv = getVisualViewportMetrics();
-      const rendered = getRenderedViewMetrics(viewName);
-
+      const rendered = measureView(viewName);
+      const aspect = m.cssHeight ? (m.cssWidth / m.cssHeight) : 0;
       return {
-        viewName,
-        capturedAt: new Date(),
         cssWidth: Math.round(m.cssWidth),
         cssHeight: Math.round(m.cssHeight),
         visualWidth: Math.round(vv.width),
         visualHeight: Math.round(vv.height),
         visualScale: Number(vv.scale || 1),
-        dpr: m.dpr,
-        adjDPR: m.adjDPR,
+        offsetLeft: Math.round(vv.offsetLeft || 0),
+        offsetTop: Math.round(vv.offsetTop || 0),
+        dpr: Number(m.dpr || 1),
+        adjDPR: Number(m.adjDPR || 1),
         effectiveWidth: Math.round(m.effectiveWidth),
         effectiveHeight: Math.round(m.effectiveHeight),
-        widthMultiplier: m.widthMultiplier,
-        heightMultiplier: m.heightMultiplier,
-        appliedMultiplier: m.multiplier,
+        widthMultiplier: Number(m.widthMultiplier || 0),
+        heightMultiplier: Number(m.heightMultiplier || 0),
+        appliedMultiplier: Number(m.multiplier || 0),
         renderedWidth: rendered.width,
         renderedHeight: rendered.height,
-        pageHeight: rendered.pageHeight
+        scrollWidth: rendered.scrollWidth,
+        scrollHeight: rendered.scrollHeight,
+        innerWidth: Math.round(window.innerWidth || 0),
+        innerHeight: Math.round(window.innerHeight || 0),
+        outerWidth: Math.round(window.outerWidth || 0),
+        outerHeight: Math.round(window.outerHeight || 0),
+        screenWidth: Math.round(screen.width || 0),
+        screenHeight: Math.round(screen.height || 0),
+        availWidth: Math.round(screen.availWidth || 0),
+        availHeight: Math.round(screen.availHeight || 0),
+        aspect,
+        orientation: m.cssWidth >= m.cssHeight ? 'LANDSCAPE' : 'PORTRAIT'
       };
     }
 
-    function formatSnapshot(snapshot) {
-      if (!snapshot) {
-        return '<div class="screen-info-pending">Not captured yet</div>';
-      }
-
-      const time = snapshot.capturedAt.toLocaleTimeString([], {
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-
+    function formatDiagnosticSnapshot(s) {
       return `
-        <div>VIEW ${snapshot.cssWidth}×${snapshot.cssHeight} CSS px</div>
-        <div>VISUAL ${snapshot.visualWidth}×${snapshot.visualHeight} • SCALE ${snapshot.visualScale.toFixed(2)}</div>
-        <div>DPR ${snapshot.dpr.toFixed(2)} • ADJ ${snapshot.adjDPR.toFixed(2)}</div>
-        <div>EFF W ${snapshot.effectiveWidth} • EFF H ${snapshot.effectiveHeight}</div>
-        <div>W MULT ${snapshot.widthMultiplier.toFixed(3)} • H MULT ${snapshot.heightMultiplier.toFixed(3)}</div>
-        <div>APPLIED ${snapshot.appliedMultiplier.toFixed(3)}</div>
-        <div>CONTENT ${snapshot.renderedWidth}×${snapshot.renderedHeight} • PAGE H ${snapshot.pageHeight}</div>
-        <div class="muted">Captured ${time}</div>
+        <div>VIEW ${s.cssWidth} × ${s.cssHeight} CSS px</div>
+        <div>VISUAL ${s.visualWidth} × ${s.visualHeight} • SCALE ${s.visualScale.toFixed(2)}</div>
+        <div>INNER ${s.innerWidth} × ${s.innerHeight}</div>
+        <div>OUTER ${s.outerWidth} × ${s.outerHeight}</div>
+        <div>SCREEN ${s.screenWidth} × ${s.screenHeight}</div>
+        <div>AVAILABLE ${s.availWidth} × ${s.availHeight}</div>
+        <div>DPR ${s.dpr.toFixed(2)} • ADJ DPR ${s.adjDPR.toFixed(2)}</div>
+        <div>EFFECTIVE W ${s.effectiveWidth} • H ${s.effectiveHeight}</div>
+        <div>WIDTH MULT ${s.widthMultiplier.toFixed(3)}</div>
+        <div>HEIGHT MULT ${s.heightMultiplier.toFixed(3)}</div>
+        <div>APPLIED MULT ${s.appliedMultiplier.toFixed(3)}</div>
+        <div>ASPECT ${s.aspect.toFixed(3)} • ${s.orientation}</div>
+        <div>CONTENT ${s.renderedWidth} × ${s.renderedHeight}</div>
+        <div>SCROLL ${s.scrollWidth} × ${s.scrollHeight}</div>
+        <div>VISUAL OFFSET ${s.offsetLeft}, ${s.offsetTop}</div>
       `;
     }
 
     function renderScreenInfo() {
-      els.ccSessionsInfo.innerHTML = formatSnapshot(screenSnapshots.home);
-      els.ccPayInfo.innerHTML = formatSnapshot(screenSnapshots.pay);
-      els.ccScreenStart.classList.toggle('active', screenCaptureRunning);
-      els.ccScreenStart.textContent = screenCaptureRunning ? 'RUNNING' : 'START';
-    }
-
-    function captureCurrentViewMetrics() {
-      if (!screenCaptureRunning) return;
-      const key = currentView === 'pay' ? 'pay' : 'home';
-      screenSnapshots[key] = makeScreenSnapshot(key);
-      renderScreenInfo();
-    }
-
-    function startScreenCapture() {
-      screenCaptureRunning = true;
-      captureCurrentViewMetrics();
-      renderScreenInfo();
-    }
-
-    function screenInfoText() {
-      function block(label, s) {
-        if (!s) return `${label}\\nNOT CAPTURED`;
-        return [
-          label,
-          `VIEW ${s.cssWidth}x${s.cssHeight} CSS px`,
-          `VISUAL ${s.visualWidth}x${s.visualHeight} SCALE ${s.visualScale.toFixed(2)}`,
-          `DPR ${s.dpr.toFixed(2)} ADJ ${s.adjDPR.toFixed(2)}`,
-          `EFF W ${s.effectiveWidth} EFF H ${s.effectiveHeight}`,
-          `W MULT ${s.widthMultiplier.toFixed(3)} H MULT ${s.heightMultiplier.toFixed(3)}`,
-          `APPLIED ${s.appliedMultiplier.toFixed(3)}`,
-          `CONTENT ${s.renderedWidth}x${s.renderedHeight} PAGE H ${s.pageHeight}`
-        ].join('\\n');
-      }
-
-      return `${block('SESSIONS', screenSnapshots.home)}\\n\\n${block('PAY', screenSnapshots.pay)}`;
-    }
-
-    async function copyScreenInfo() {
-      const value = screenInfoText();
-      try {
-        await navigator.clipboard.writeText(value);
-        const previous = els.ccScreenCopy.textContent;
-        els.ccScreenCopy.textContent = 'COPIED';
-        window.setTimeout(() => {
-          els.ccScreenCopy.textContent = previous;
-        }, 1200);
-      } catch (_) {
-        const previous = els.ccScreenCopy.textContent;
-        els.ccScreenCopy.textContent = 'COPY FAILED';
-        window.setTimeout(() => {
-          els.ccScreenCopy.textContent = previous;
-        }, 1400);
-      }
+      els.ccSessionsInfo.innerHTML = formatDiagnosticSnapshot(makeDiagnosticSnapshot('home'));
+      els.ccPayInfo.innerHTML = formatDiagnosticSnapshot(makeDiagnosticSnapshot('pay'));
     }
 
     function applyAuthorizationUI() {
@@ -1912,7 +1883,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.35';
+      els.revisionBox.textContent = 'V1.36';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2538,7 +2509,6 @@
         }
 
         requestAnimationFrame(() => {
-          captureCurrentViewMetrics();
           els.curtain.classList.remove('covered');
         });
       };
@@ -2563,8 +2533,6 @@
       switchControlMode('user');
     });
 
-    els.ccScreenStart.addEventListener('click', startScreenCapture);
-    els.ccScreenCopy.addEventListener('click', copyScreenInfo);
 
     els.ccClose.addEventListener('click', closeControlCenter);
     els.controlCenter.addEventListener('click', event => {
