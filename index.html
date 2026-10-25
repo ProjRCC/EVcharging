@@ -435,6 +435,16 @@
       padding: 0.9rem 0.45rem;
     }
 
+
+    .bottom-actions .link-button {
+      text-align: center;
+      line-height: 1.02;
+      white-space: normal;
+      font-size: 0.82rem;
+      padding-left: 0.3rem;
+      padding-right: 0.3rem;
+    }
+
     body.keyboard-open .bottom-actions {
       display: none !important;
     }
@@ -843,7 +853,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.2">V1.2</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.3">V1.3</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -875,10 +885,6 @@
           Updated: --/-- - --:--:-- --
         </div>
       </form>
-
-      <div id="authorizationNote" class="authorization-note" hidden>
-        Scan the charger QR to add or manage a charging session.
-      </div>
 
       <div class="session-shell" id="sessionShell">
         <div class="table-container">
@@ -958,6 +964,7 @@
           <input
             id="payHoursInput"
             class="calculator-input"
+            tabindex="-1"
             type="number"
             min="0"
             step="0.5"
@@ -1174,14 +1181,13 @@
     }
 
     function applyAuthorizationUI() {
-      const authorized = currentRole === 'user' || currentRole === 'master';
-      const hasQrAccess = authorized || Boolean(currentToken);
+      const hasQrAccess = Boolean(currentToken) || currentRole === 'user' || currentRole === 'master';
       els.name.disabled = !hasQrAccess;
       els.hours.disabled = !hasQrAccess;
       els.submit.disabled = !hasQrAccess;
-      els.authNote.hidden = hasQrAccess;
+      if (els.authNote) els.authNote.hidden = true;
       els.masterZone.classList.toggle('visible', currentRole === 'master');
-      els.revisionBox.textContent = 'V1.2';
+      els.revisionBox.textContent = 'V1.3';
       renderTable();
     }
 
@@ -1430,7 +1436,7 @@
        ========================= */
 
     async function submitEntry() {
-      if (currentRole !== 'user' && currentRole !== 'master') {
+      if (!currentToken && currentRole !== 'user' && currentRole !== 'master') {
         showAlert('Scan the charger QR to submit a charging session.');
         return;
       }
@@ -1487,7 +1493,7 @@
         setStatusError('SAVE FAILED');
         showAlert(error.message || 'Error saving session.');
       } finally {
-        els.submit.disabled = !(currentRole === 'user' || currentRole === 'master' || currentToken);
+        els.submit.disabled = !(currentToken || currentRole === 'user' || currentRole === 'master');
       }
     }
 
@@ -1508,7 +1514,7 @@
        ========================= */
 
     async function endSession(start) {
-      if (currentRole !== 'user' && currentRole !== 'master') return;
+      if (!currentToken && currentRole !== 'user' && currentRole !== 'master') return;
 
       markRowBusy(start, 'ENDING');
       stopCurrentLoad();
@@ -1529,7 +1535,7 @@
     }
 
     function deleteEntry(start) {
-      if (currentRole !== 'user' && currentRole !== 'master') return;
+      if (!currentToken && currentRole !== 'user' && currentRole !== 'master') return;
 
       showConfirm(
         'DELETE ACTIVE SESSION? It will be archived first.',
@@ -1631,7 +1637,7 @@
     function renderTable() {
       els.tbody.innerHTML = '';
       const nowMs = Date.now();
-      const authorized = currentRole === 'user' || currentRole === 'master';
+      const authorized = Boolean(currentToken) || currentRole === 'user' || currentRole === 'master';
 
       currentData.forEach(entry => {
         const startDate = new Date(entry.Start);
@@ -1745,29 +1751,46 @@
 
     let payEnterDismissUntil = 0;
 
-    function dismissPayKeyboard(event) {
-      if (!event || event.key !== 'Enter') return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
-      payEnterDismissUntil = Date.now() + 500;
-      const target = event.currentTarget;
-      if (target) {
-        target.blur();
-        target.setAttribute('readonly', 'readonly');
-        window.setTimeout(() => target.removeAttribute('readonly'), 120);
+    function hardDismissPayKeyboard(input, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
       }
+      payEnterDismissUntil = Date.now() + 900;
+      if (!input) return;
+      input.blur();
+      input.setAttribute('readonly', 'readonly');
+      window.setTimeout(() => {
+        input.removeAttribute('readonly');
+        if (document.activeElement === els.payHoursInput && Date.now() < payEnterDismissUntil) {
+          els.payHoursInput.blur();
+        }
+      }, 220);
+    }
+
+    function payEnterHandler(event) {
+      if (!event || event.key !== 'Enter') return;
+      hardDismissPayKeyboard(event.currentTarget, event);
     }
 
     [els.kwhInput, els.payHoursInput].forEach(input => {
-      input.addEventListener('keydown', dismissPayKeyboard, true);
-      input.addEventListener('keyup', dismissPayKeyboard, true);
-      input.addEventListener('focus', () => {
-        if (Date.now() < payEnterDismissUntil) {
-          input.blur();
-        }
-      });
+      input.addEventListener('keydown', payEnterHandler, true);
+      input.addEventListener('keyup', payEnterHandler, true);
+      input.addEventListener('keypress', payEnterHandler, true);
     });
+
+    els.payHoursInput.addEventListener('focus', () => {
+      if (Date.now() < payEnterDismissUntil) {
+        requestAnimationFrame(() => els.payHoursInput.blur());
+      }
+    });
+
+    document.addEventListener('focusin', event => {
+      if (Date.now() < payEnterDismissUntil && event.target === els.payHoursInput) {
+        requestAnimationFrame(() => els.payHoursInput.blur());
+      }
+    }, true);
 
     /* =========================
        KEYBOARD / BOTTOM BAR
