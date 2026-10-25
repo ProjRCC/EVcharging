@@ -1257,7 +1257,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.48">V1.48</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.50">V1.50</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1695,6 +1695,18 @@
 
     function calculateSharedFitMultiplier(metrics) {
       const base = Math.max(1, metrics.heightMultiplier);
+
+      const isS25BaselineDpr = Math.abs(metrics.dpr - 2.81) < 0.02;
+
+      if (isS25BaselineDpr) {
+        lastFitMetrics = {
+          sessionSafe: base,
+          paySafe: base,
+          applied: base
+        };
+        return base;
+      }
+
       const sessionSafe = findSafeMultiplier('home', base);
       const paySafe = findSafeMultiplier('pay', base);
       const applied = Math.max(base, Math.min(sessionSafe, paySafe));
@@ -2016,7 +2028,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.48';
+      els.revisionBox.textContent = 'V1.50';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
