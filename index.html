@@ -542,6 +542,7 @@
 
     /* PORTRAIT-ONLY — same visual treatment as SimpleScramble. */
     .rotate-portrait-overlay {
+      display: none !important;
       position: fixed;
       inset: 0;
       z-index: 10000;
@@ -572,22 +573,6 @@
       opacity: 0;
     }
 
-    @media (orientation: landscape) {
-      .rotate-portrait-overlay {
-        opacity: 1;
-        visibility: visible;
-        pointer-events: auto;
-      }
-      .rotate-portrait-box {
-        opacity: 1;
-        animation: evRotatePortraitIn 1s ease-out both;
-      }
-    }
-
-    @keyframes evRotatePortraitIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
 
 
     .bottom-actions .master-delete-mode {
@@ -1043,85 +1028,78 @@
       }
     }
 
-    @media (min-width: 601px) {
-      thead[data-loaded="true"] {
-        display: table-header-group;
-      }
-    }
-
-    @media (max-width: 600px) {
       h1 {
-        font-size: 1.52rem;
-      }
-
-      table {
-        border: 0;
-      }
-
-      thead {
-        display: none !important;
-      }
-
-      tr {
-        display: block;
-        margin-bottom: var(--home-gap);
-        border: 1px solid #666666;
-        border-radius: 0.62rem;
-        overflow: hidden;
-        box-shadow: var(--shadow-soft);
-      }
-
-      td {
-        display: block;
-        position: relative;
-        padding: 0.34rem 0.75rem 0.34rem 50%;
-        border: 0;
-        border-bottom: 1px dotted #666666;
-        font-size: 0.78rem;
-        text-align: right;
-      }
-
-      td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 0;
-        width: 50%;
-        padding-left: 0.75rem;
-        font-weight: 900;
-        text-align: left;
-      }
-
-      td.action-cell {
-        min-height: 2.3rem;
-        visibility: visible;
-        opacity: 1;
-        padding: 0.3rem 0.4rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 0.65rem;
-        border-bottom: 0;
-        text-align: center;
-      }
-
-      td.action-cell::before {
-        display: none;
-      }
-
-
-      tr.ended-row {
-        border-color: transparent;
-        box-shadow: none !important;
-        overflow: hidden;
-      }
-
-      tr.ended-row td:last-child {
-        border-bottom: 0 !important;
-      }
-      .active-row {
-        border: 0.2rem solid var(--green);
-      }
+      font-size: 1.52rem;
     }
+
+    table {
+      border: 0;
+    }
+
+    thead {
+      display: none !important;
+    }
+
+    tr {
+      display: block;
+      margin-bottom: var(--home-gap);
+      border: 1px solid #666666;
+      border-radius: 0.62rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    td {
+      display: block;
+      position: relative;
+      padding: 0.34rem 0.75rem 0.34rem 50%;
+      border: 0;
+      border-bottom: 1px dotted #666666;
+      font-size: 0.78rem;
+      text-align: right;
+    }
+
+    td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 0;
+      width: 50%;
+      padding-left: 0.75rem;
+      font-weight: 900;
+      text-align: left;
+    }
+
+    td.action-cell {
+      min-height: 2.3rem;
+      visibility: visible;
+      opacity: 1;
+      padding: 0.3rem 0.4rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.65rem;
+      border-bottom: 0;
+      text-align: center;
+    }
+
+    td.action-cell::before {
+      display: none;
+    }
+
+
+    tr.ended-row {
+      border-color: transparent;
+      box-shadow: none !important;
+      overflow: hidden;
+    }
+
+    tr.ended-row td:last-child {
+      border-bottom: 0 !important;
+    }
+    .active-row {
+      border: 0.2rem solid var(--green);
+    }
+
   </style>
 </head>
 
@@ -1133,7 +1111,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.30">V1.30</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.31">V1.31</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1499,7 +1477,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.30';
+      els.revisionBox.textContent = 'V1.31';
       renderTable();
     }
 
