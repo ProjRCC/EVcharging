@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <title>EV Charging Status</title>
+
+  <!--
+    EV CHARGING V1
+    Donor behavior: original REV 3 EV Charging Status app.
+    Backend: https://evcharging.projrcc.workers.dev
+    Presentation reference: SimpleScramble / SSHCP V23.102.
+
+    V1 viewport authority:
+      AdjDPR = max(2.00, devicePixelRatio)
+      Global scale = max(0.70, innerHeight * AdjDPR / 2034)
+      Main app width = min(100%, 900 CSS px)
+
+    HOME and PAY are local views. No network call is required to switch views
+    or use either payment calculator.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --gray-7: #444444;
+      --gray-8: #333333;
+      --gray-9: #222222;
+      --gray-line: #666666;
+      --text: #ffffff;
+      --muted: #d1d1d1;
+      --blue: #1a5178;
+      --blue-press: #174765;
+      --red: #a33131;
+      --red-press: #862727;
+      --green: #67bd4b;
+      --active-bg: #31472a;
+      --shadow: 0 0.23rem 0.62rem rgba(0, 0, 0, 0.28);
+      --shadow-soft: 0 0.16rem 0.42rem rgba(0, 0, 0, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      background: var(--gray-7);
+      font-family: 'Roboto', Arial, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-width: 280px;
+      min-height: 100dvh;
+      background: var(--gray-7);
+      color: var(--text);
+      font-family: 'Roboto', Arial, sans-serif;
+      overflow-x: hidden;
+    }
+
+    @media (display-mode: standalone) {
+      body {
+        min-height: 100svh;
+      }
+    }
+
+    button,
+    input,
+    a {
+      font: inherit;
+    }
+
+    button,
+    .link-button {
+      touch-action: manipulation;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    a:focus-visible {
+      outline: 0.16rem solid #ffffff;
+      outline-offset: 0.14rem;
+    }
+
+    .app-shell {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0.75rem 0.75rem 1rem;
+    }
+
+    .view {
+      width: 100%;
+    }
+
+    .view[hidden] {
+      display: none !important;
+    }
+
+    h1 {
+      margin: 0.5rem 2.6rem 0.95rem;
+      color: #ffffff;
+      font-size: 1.78rem;
+      font-weight: 900;
+      line-height: 1.08;
+      text-align: center;
+    }
+
+    .revision-box {
+      position: absolute;
+      top: 0.45rem;
+      right: 0.45rem;
+      z-index: 40;
+      min-width: 2.25rem;
+      padding: 0.24rem 0.4rem;
+      border: 1px solid #707070;
+      border-radius: 0.42rem;
+      background: var(--gray-8);
+      color: #cfcfcf;
+      font-size: 0.64rem;
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .charging-form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 0 0.95rem;
+    }
+
+    .field {
+      width: 90%;
+      max-width: 16rem;
+      margin: 0 0 0.72rem;
+      padding: 0.66rem 0.72rem;
+      border: 1px solid #5e5e5e;
+      border-radius: 0.68rem;
+      background: var(--gray-8);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1.08rem;
+      line-height: 1.15;
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .field::placeholder {
+      color: #cfcfcf;
+      opacity: 1;
+    }
+
+    .field:disabled {
+      opacity: 0.58;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .action-button,
+    .link-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3.18rem;
+      border: 0;
+      border-radius: 0.78rem;
+      background: var(--blue);
+      color: #ffffff;
+      text-decoration: none;
+      text-transform: uppercase;
+      font-weight: 900;
+      font-size: 1.05rem;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .action-button:active,
+    .link-button:active {
+      transform: translateY(1px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .action-button:hover,
+      .link-button:hover {
+        filter: brightness(1.08);
+      }
+    }
+
+    .action-button:disabled {
+      opacity: 0.52;
+      cursor: default;
+      transform: none;
+    }
+
+    .submit-button {
+      width: 90%;
+      max-width: 8rem;
+      padding: 0.9rem 0.7rem;
+    }
+
+    #statusIndicator {
+      width: 12.6rem;
+      min-height: 1.55rem;
+      margin-top: 0.55rem;
+      padding: 0.24rem 0.45rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.48rem;
+      background: #cfcfcf;
+      color: #222222;
+      font-size: 0.64rem;
+      font-weight: 900;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      box-shadow: var(--shadow-soft);
+    }
+
+    #statusIndicator.loading {
+      background: #d6a700;
+      color: #222222;
+    }
+
+    #statusIndicator.error {
+      background: var(--red);
+      color: #ffffff;
+    }
+
+    .authorization-note {
+      width: min(92%, 28rem);
+      margin: -0.15rem auto 0.75rem;
+      color: #e4e4e4;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin: 0 0 0.75rem;
+      border-radius: 0.58rem;
+    }
+
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      border: 1px solid #5a5a5a;
+      padding: 0.32rem;
+      text-align: center;
+    }
+
+    th {
+      background: var(--gray-8);
+      font-size: 0.88rem;
+    }
+
+    td {
+      background: var(--gray-9);
+    }
+
+    td[data-label="Time Left"] {
+      vertical-align: middle;
+    }
+
+    td[data-label="Name"] {
+      font-weight: 900;
+    }
+
+    .time-left-header {
+      font-size: 0.82rem;
+    }
+
+    .active-row {
+      border: 0.2rem solid var(--green);
+    }
+
+    .active-row td {
+      background: var(--active-bg);
+    }
+
+    thead {
+      display: none;
+    }
+
+    .row-action-group {
+      display: inline-flex;
+      gap: 0.42rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mini-button {
+      min-width: 2.1rem;
+      height: 1.72rem;
+      padding: 0 0.54rem;
+      border: 0;
+      border-radius: 0.48rem;
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-soft);
+      cursor: pointer;
+    }
+
+    .mini-button.end {
+      background: var(--blue);
+    }
+
+    .mini-button.delete {
+      background: var(--red);
+    }
+
+    .master-zone {
+      display: none;
+      width: 100%;
+      margin: 0.55rem 0 0.82rem;
+      text-align: center;
+    }
+
+    .master-zone.visible {
+      display: block;
+    }
+
+    .delete-all-btn {
+      width: 78%;
+      max-width: 9.5rem;
+      min-height: 2.6rem;
+      padding: 0.65rem 0.8rem;
+      border: 0;
+      border-radius: 0.7rem;
+      background: var(--red);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+    }
+
+    .bottom-actions {
+      width: 100%;
+      max-width: 34rem;
+      margin: 0.85rem auto 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.72rem;
+    }
+
+    .bottom-actions .action-button,
+    .bottom-actions .link-button {
+      width: 100%;
+      min-width: 0;
+      padding: 0.9rem 0.5rem;
+    }
+
+    /* PAY VIEW */
+
+    .pay-intro {
+      width: min(94%, 40rem);
+      margin: 0 auto 0.88rem;
+      color: #ffffff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .pay-warning {
+      width: min(94%, 40rem);
+      margin: 0 auto 1rem;
+      padding: 0.72rem 0.78rem;
+      border-radius: 0.72rem;
+      background: var(--gray-8);
+      color: #ffffff;
+      font-size: 0.84rem;
+      font-weight: 900;
+      line-height: 1.3;
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .pay-warning strong {
+      display: block;
+      margin-top: 0.28rem;
+      color: #ffb1b1;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+    }
+
+    .calculator-grid {
+      width: 100%;
+      max-width: 42rem;
+      margin: 0 auto 1rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.72rem;
+    }
+
+    .calculator-card {
+      min-width: 0;
+      padding: 0.8rem 0.58rem 0.9rem;
+      border-radius: 0.88rem;
+      background: var(--gray-8);
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .calculator-title {
+      margin: 0;
+      font-size: 0.88rem;
+      font-weight: 900;
+      line-height: 1.12;
+      text-transform: uppercase;
+    }
+
+    .calculator-rate {
+      margin: 0.34rem 0 0.72rem;
+      color: #d7d7d7;
+      font-size: 0.76rem;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .calculator-input {
+      width: 100%;
+      margin: 0;
+      padding: 0.62rem 0.28rem;
+      border: 1px solid #626262;
+      border-radius: 0.62rem;
+      background: #222222;
+      color: #ffffff;
+      font-size: 1rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .calculator-result-label {
+      margin-top: 0.7rem;
+      color: #cfcfcf;
+      font-size: 0.62rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .calculator-result {
+      min-height: 1.7rem;
+      margin-top: 0.15rem;
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+
+    .payment-links-label {
+      margin: 0.1rem 0 0.58rem;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .payment-links {
+      width: 100%;
+      max-width: 34rem;
+      margin: 0 auto 1.05rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.72rem;
+    }
+
+    .payment-link {
+      min-width: 0;
+      min-height: 4.2rem;
+      padding: 0.55rem 0.35rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.24rem;
+      border-radius: 0.88rem;
+      background: #ffffff;
+      color: #111111;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+    }
+
+    .payment-mark {
+      width: 1.75rem;
+      height: 1.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .payment-name {
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .home-button {
+      width: 100%;
+      max-width: 34rem;
+      margin: 0 auto;
+      padding: 0.96rem 0.8rem;
+      display: flex;
+    }
+
+    /* MODAL */
+
+    .custom-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(68, 68, 68, 0.92);
+      backdrop-filter: blur(0.35rem);
+      -webkit-backdrop-filter: blur(0.35rem);
+    }
+
+    .custom-modal-overlay.open {
+      display: flex;
+    }
+
+    .custom-modal-box {
+      width: 90%;
+      max-width: 20rem;
+      padding: 1.45rem 1.1rem 1.15rem;
+      border-radius: 0.95rem;
+      background: #f7f7f7;
+      color: #111111;
+      text-align: center;
+      box-shadow: 0 0.45rem 1.3rem rgba(0, 0, 0, 0.36);
+    }
+
+    .custom-modal-message {
+      margin: 0 0 1.1rem;
+      font-size: 1.05rem;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
+    .custom-modal-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 0.72rem;
+    }
+
+    .custom-modal-button {
+      min-width: 6.1rem;
+      min-height: 2.7rem;
+      padding: 0.68rem 0.78rem;
+      border: 0;
+      border-radius: 0.68rem;
+      background: var(--blue);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 0.9rem;
+      line-height: 1;
+      text-transform: uppercase;
+      box-shadow: var(--shadow-soft);
+      cursor: pointer;
+    }
+
+    .custom-modal-cancel {
+      background: #555555;
+    }
+
+    .custom-modal-delete {
+      background: var(--red);
+    }
+
+    /* GRAY 7 VIEW CURTAIN */
+
+    #viewCurtain {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      pointer-events: none;
+      background: var(--gray-7);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.16s ease, visibility 0s linear 0.16s;
+    }
+
+    #viewCurtain.covered {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.12s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #viewCurtain {
+        transition: none;
+      }
+    }
+
+    @media (min-width: 601px) {
+      thead[data-loaded="true"] {
+        display: table-header-group;
+      }
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.52rem;
+      }
+
+      table {
+        border: 0;
+      }
+
+      thead {
+        display: none !important;
+      }
+
+      tr {
+        display: block;
+        margin-bottom: 0.66rem;
+        border: 1px solid #666666;
+        border-radius: 0.62rem;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+      }
+
+      td {
+        display: block;
+        position: relative;
+        padding: 0.34rem 0.75rem 0.34rem 50%;
+        border: 0;
+        border-bottom: 1px dotted #666666;
+        font-size: 0.78rem;
+        text-align: right;
+      }
+
+      td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 50%;
+        padding-left: 0.75rem;
+        font-weight: 900;
+        text-align: left;
+      }
+
+      td:last-child {
+        min-height: 2.3rem;
+        padding: 0.3rem 0.4rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.65rem;
+        border-bottom: 0;
+        text-align: center;
+      }
+
+      td:last-child::before {
+        display: none;
+      }
+
+      .active-row {
+        border: 0.2rem solid var(--green);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="viewCurtain" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <div class="revision-box" id="revisionBox" title="EV Charging V1">V1</div>
+
+    <!-- HOME -->
+    <section id="homeView" class="view" aria-label="EV charging status">
+      <h1>EV Charging Status</h1>
+
+      <form id="chargingForm" class="charging-form" novalidate>
+        <input
+          id="name"
+          class="field"
+          autocomplete="name"
+          placeholder="Name - Vehicle Make">
+
+        <input
+          id="hours"
+          class="field"
+          type="number"
+          min="0"
+          max="4.5"
+          step="0.25"
+          inputmode="decimal"
+          enterkeyhint="done"
+          placeholder="Hours">
+
+        <button id="submitButton" class="action-button submit-button" type="submit">
+          Submit
+        </button>
+
+        <div id="statusIndicator" role="status" aria-live="polite">
+          Updated: --/-- - --:--:-- --
+        </div>
+      </form>
+
+      <div id="authorizationNote" class="authorization-note" hidden>
+        Scan the charger USER or MASTER QR to add or manage a charging session.
+      </div>
+
+      <div class="table-container">
+        <table id="statusTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Start</th>
+              <th>End</th>
+              <th class="time-left-header">Time Left</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="masterZone" class="master-zone">
+        <button id="deleteAllButton" class="delete-all-btn" type="button">
+          Delete All
+        </button>
+      </div>
+
+      <div class="bottom-actions">
+        <button id="payButton" class="action-button" type="button">Pay</button>
+        <a
+          id="passwordButton"
+          class="link-button"
+          href="https://wa.me/qr/VXCAX53DGUGMJ1?s=v"
+          target="_blank"
+          rel="noopener noreferrer">
+          Password
+        </a>
+      </div>
+    </section>
+
+    <!-- PAY -->
+    <section id="payView" class="view" aria-label="Pay for charging" hidden>
+      <h1>Pay for Charging</h1>
+
+      <div class="pay-intro">
+        Charging is provided on the honor system. Reimburse your charging using either method below. The calculators are optional.
+      </div>
+
+      <div class="pay-warning">
+        Choose either actual energy used or approximate charging time.
+        <strong>FAILURE TO PAY WILL RESULT IN SUSPENSION OF CHARGER ACCESS.</strong>
+        Access codes may be changed to enforce suspension.
+      </div>
+
+      <div class="calculator-grid">
+        <section class="calculator-card" aria-label="Pay by kilowatt hour calculator">
+          <h2 class="calculator-title">Pay by Energy</h2>
+          <div class="calculator-rate">$0.20 / kWh</div>
+          <input
+            id="kwhInput"
+            class="calculator-input"
+            type="number"
+            min="0"
+            step="0.1"
+            inputmode="decimal"
+            placeholder="kWh Added"
+            aria-label="Kilowatt hours added">
+          <div class="calculator-result-label">Amount</div>
+          <div id="kwhResult" class="calculator-result">$0.00</div>
+        </section>
+
+        <section class="calculator-card" aria-label="Pay by time calculator">
+          <h2 class="calculator-title">Pay by Time</h2>
+          <div class="calculator-rate">$2.00 / hour</div>
+          <input
+            id="payHoursInput"
+            class="calculator-input"
+            type="number"
+            min="0"
+            step="0.5"
+            inputmode="decimal"
+            placeholder="Hours"
+            aria-label="Approximate charging hours">
+          <div class="calculator-result-label">Amount</div>
+          <div id="hoursResult" class="calculator-result">$0.00</div>
+        </section>
+      </div>
+
+      <div class="payment-links-label">Choose Payment Method</div>
+
+      <div class="payment-links">
+        <a
+          class="payment-link"
+          href="https://venmo.com/code?user_id=3056409608454144424&created=1792848287"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Pay with Venmo">
+          <span class="payment-mark" aria-hidden="true">V</span>
+          <span class="payment-name">Venmo</span>
+        </a>
+
+        <a
+          class="payment-link"
+          href="https://www.paypal.com/qrcodes/p2pqrc/XZUGA4RWE37G2"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Pay with PayPal">
+          <span class="payment-mark" aria-hidden="true">P</span>
+          <span class="payment-name">PayPal</span>
+        </a>
+      </div>
+
+      <button id="homeButton" class="action-button home-button" type="button">
+        Home
+      </button>
+    </section>
+  </main>
+
+  <!-- CUSTOM MODAL -->
+  <div id="customModal" class="custom-modal-overlay" aria-hidden="true">
+    <div class="custom-modal-box" role="dialog" aria-modal="true" aria-labelledby="customModalMessage">
+      <div id="customModalMessage" class="custom-modal-message"></div>
+
+      <div class="custom-modal-buttons">
+        <button id="customModalCancel" type="button" class="custom-modal-button custom-modal-cancel">
+          Cancel
+        </button>
+
+        <button id="customModalConfirm" type="button" class="custom-modal-button">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const API_BASE = 'https://evcharging.projrcc.workers.dev';
+    const AUTH_STORAGE_KEY = 'EVCharging:authToken:V1';
+    const ROLE_STORAGE_KEY = 'EVCharging:authRole:V1';
+    const DATA_CACHE_KEY = 'EVCharging:dataCache:V1';
+    const LAST_NAME_KEY = 'EVCharging:lastName:V1';
+
+    const MAX_HOURS = 4.5;
+    const MIN_ADJ_DPR = 2.00;
+    const EFFECTIVE_HEIGHT_BASELINE = 2034;
+    const MIN_GLOBAL_MULTIPLIER = 0.70;
+
+    let currentData = [];
+    let currentRole = 'none';
+    let currentToken = '';
+    let modalConfirmAction = null;
+    let modalCancelAction = null;
+    let activeLoadController = null;
+    let loadGeneration = 0;
+    let currentView = 'home';
+
+    const els = {
+      root: document.documentElement,
+      homeView: document.getElementById('homeView'),
+      payView: document.getElementById('payView'),
+      curtain: document.getElementById('viewCurtain'),
+      revisionBox: document.getElementById('revisionBox'),
+      form: document.getElementById('chargingForm'),
+      name: document.getElementById('name'),
+      hours: document.getElementById('hours'),
+      submit: document.getElementById('submitButton'),
+      status: document.getElementById('statusIndicator'),
+      authNote: document.getElementById('authorizationNote'),
+      tbody: document.querySelector('#statusTable tbody'),
+      thead: document.querySelector('#statusTable thead'),
+      masterZone: document.getElementById('masterZone'),
+      deleteAll: document.getElementById('deleteAllButton'),
+      payButton: document.getElementById('payButton'),
+      homeButton: document.getElementById('homeButton'),
+      kwhInput: document.getElementById('kwhInput'),
+      payHoursInput: document.getElementById('payHoursInput'),
+      kwhResult: document.getElementById('kwhResult'),
+      hoursResult: document.getElementById('hoursResult'),
+      modal: document.getElementById('customModal'),
+      modalMessage: document.getElementById('customModalMessage'),
+      modalCancel: document.getElementById('customModalCancel'),
+      modalConfirm: document.getElementById('customModalConfirm')
+    };
+
+    /* =========================
+       VIEWPORT / SIMPLE SCRAMBLE SCALE
+       ========================= */
+
+    function adjustedDpr(rawValue = window.devicePixelRatio) {
+      const measured = Number(rawValue);
+      const actual = Number.isFinite(measured) && measured > 0 ? measured : 1;
+      return Math.max(MIN_ADJ_DPR, actual);
+    }
+
+    function getViewportMetrics() {
+      const cssWidth = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1);
+      const cssHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+      const dpr = Math.max(0.1, Number(window.devicePixelRatio) || 1);
+      const adjDPR = adjustedDpr(dpr);
+      const effectiveHeight = cssHeight * adjDPR;
+      const multiplier = Math.max(
+        MIN_GLOBAL_MULTIPLIER,
+        effectiveHeight / EFFECTIVE_HEIGHT_BASELINE
+      );
+
+      return {
+        cssWidth,
+        cssHeight,
+        dpr,
+        adjDPR,
+        effectiveHeight,
+        effectiveWidth: Math.min(900, cssWidth) * adjDPR,
+        multiplier
+      };
+    }
+
+    function applyViewportScale() {
+      const metrics = getViewportMetrics();
+      document.documentElement.style.fontSize = `${(16 * metrics.multiplier).toFixed(3)}px`;
+      document.documentElement.style.setProperty('--ev-global-scale', metrics.multiplier.toFixed(5));
+      document.documentElement.style.setProperty('--ev-effective-height', String(Math.round(metrics.effectiveHeight)));
+      document.documentElement.style.setProperty('--ev-effective-width', String(Math.round(metrics.effectiveWidth)));
+    }
+
+    let viewportRaf = 0;
+    function scheduleViewportScale() {
+      if (viewportRaf) cancelAnimationFrame(viewportRaf);
+      viewportRaf = requestAnimationFrame(() => {
+        viewportRaf = 0;
+        applyViewportScale();
+      });
+    }
+
+    applyViewportScale();
+    window.addEventListener('resize', scheduleViewportScale, { passive: true });
+    window.addEventListener('orientationchange', scheduleViewportScale, { passive: true });
+
+    /* =========================
+       AUTHORIZATION
+       ========================= */
+
+    function getIncomingAuthToken() {
+      const url = new URL(window.location.href);
+      const token = String(url.searchParams.get('auth') || '').trim();
+
+      if (url.searchParams.has('auth')) {
+        url.searchParams.delete('auth');
+        const clean = url.pathname + (url.search ? url.search : '') + url.hash;
+        history.replaceState(null, '', clean);
+      }
+
+      return token;
+    }
+
+    function getStoredAuthToken() {
+      try {
+        return String(localStorage.getItem(AUTH_STORAGE_KEY) || '').trim();
+      } catch (_) {
+        return '';
+      }
+    }
+
+    function getStoredRole() {
+      try {
+        const role = String(localStorage.getItem(ROLE_STORAGE_KEY) || 'none');
+        return role === 'master' || role === 'user' ? role : 'none';
+      } catch (_) {
+        return 'none';
+      }
+    }
+
+    function saveAuthorization(token, role) {
+      currentToken = token || '';
+      currentRole = role === 'master' || role === 'user' ? role : 'none';
+
+      try {
+        if (currentToken && currentRole !== 'none') {
+          localStorage.setItem(AUTH_STORAGE_KEY, currentToken);
+          localStorage.setItem(ROLE_STORAGE_KEY, currentRole);
+        } else {
+          localStorage.removeItem(AUTH_STORAGE_KEY);
+          localStorage.removeItem(ROLE_STORAGE_KEY);
+        }
+      } catch (_) {}
+
+      applyAuthorizationUI();
+    }
+
+    function applyAuthorizationUI() {
+      const authorized = currentRole === 'user' || currentRole === 'master';
+      els.name.disabled = !authorized;
+      els.hours.disabled = !authorized;
+      els.submit.disabled = !authorized;
+      els.authNote.hidden = authorized;
+      els.masterZone.classList.toggle('visible', currentRole === 'master');
+      els.revisionBox.textContent = currentRole === 'master' ? 'V1 M' : currentRole === 'user' ? 'V1 U' : 'V1';
+      renderTable();
+    }
+
+    function authHeaders(token = currentToken) {
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      return headers;
+    }
+
+    /* =========================
+       STATUS
+       ========================= */
+
+    function setStatusLoading(label = 'LOADING') {
+      els.status.textContent = label;
+      els.status.classList.add('loading');
+      els.status.classList.remove('error');
+    }
+
+    function setStatusUpdated() {
+      const now = new Date();
+      const date = `${now.getMonth() + 1}/${now.getDate()}`;
+      const time = now.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+
+      els.status.textContent = `Updated: ${date} - ${time}`;
+      els.status.classList.remove('loading', 'error');
+    }
+
+    function setStatusError(message = 'UPDATE FAILED') {
+      els.status.textContent = message;
+      els.status.classList.remove('loading');
+      els.status.classList.add('error');
+    }
+
+    /* =========================
+       DATA CACHE
+       ========================= */
+
+    function restoreCachedData() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(DATA_CACHE_KEY) || 'null');
+        if (Array.isArray(parsed)) {
+          currentData = parsed.filter(item => item && item.Name && item.Start && item.End);
+          renderTable();
+          return currentData.length > 0;
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    function cacheCurrentData() {
+      try {
+        localStorage.setItem(DATA_CACHE_KEY, JSON.stringify(currentData));
+      } catch (_) {}
+    }
+
+    /* =========================
+       API
+       ========================= */
+
+    async function apiRequest(path, options = {}) {
+      const response = await fetch(API_BASE + path, {
+        cache: 'no-store',
+        ...options,
+        headers: {
+          ...authHeaders(options.token === undefined ? currentToken : options.token),
+          ...(options.headers || {})
+        }
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = null;
+      }
+
+      if (!response.ok || !data || data.ok !== true) {
+        const message = data && data.error ? data.error : `Request failed (HTTP ${response.status}).`;
+        const error = new Error(message);
+        error.status = response.status;
+        throw error;
+      }
+
+      return data;
+    }
+
+    async function loadData({ tokenCandidate = currentToken, startup = false } = {}) {
+      const generation = ++loadGeneration;
+
+      if (activeLoadController) {
+        try { activeLoadController.abort(); } catch (_) {}
+      }
+
+      const controller = typeof AbortController === 'function' ? new AbortController() : null;
+      activeLoadController = controller;
+
+      setStatusLoading(startup && currentData.length ? 'UPDATING' : 'LOADING');
+
+      try {
+        const response = await fetch(API_BASE + '/status', {
+          method: 'GET',
+          cache: 'no-store',
+          signal: controller ? controller.signal : undefined,
+          headers: authHeaders(tokenCandidate)
+        });
+
+        const payload = await response.json();
+
+        if (!response.ok || !payload || payload.ok !== true || !Array.isArray(payload.data)) {
+          throw new Error(payload && payload.error ? payload.error : `Status failed (HTTP ${response.status}).`);
+        }
+
+        if (generation !== loadGeneration) return;
+
+        const validRole = payload.role === 'master' || payload.role === 'user' ? payload.role : 'none';
+
+        if (tokenCandidate && validRole !== 'none') {
+          saveAuthorization(tokenCandidate, validRole);
+        } else if (tokenCandidate && validRole === 'none') {
+          saveAuthorization('', 'none');
+        } else {
+          currentRole = validRole;
+          applyAuthorizationUI();
+        }
+
+        currentData = payload.data;
+        cacheCurrentData();
+        renderTable();
+        els.thead.setAttribute('data-loaded', 'true');
+        setStatusUpdated();
+      } catch (error) {
+        if (error && error.name === 'AbortError') return;
+        console.error('Load error:', error);
+        setStatusError(currentData.length ? 'UPDATE FAILED' : 'LOAD FAILED');
+      } finally {
+        if (activeLoadController === controller) activeLoadController = null;
+      }
+    }
+
+    function stopCurrentLoad() {
+      loadGeneration++;
+      if (activeLoadController) {
+        try { activeLoadController.abort(); } catch (_) {}
+      }
+      activeLoadController = null;
+    }
+
+    function acceptMutationData(payload) {
+      if (payload.role === 'master' || payload.role === 'user') {
+        currentRole = payload.role;
+        try { localStorage.setItem(ROLE_STORAGE_KEY, currentRole); } catch (_) {}
+      }
+
+      currentData = Array.isArray(payload.data) ? payload.data : [];
+      cacheCurrentData();
+      applyAuthorizationUI();
+      renderTable();
+      setStatusUpdated();
+    }
+
+    /* =========================
+       MODALS
+       ========================= */
+
+    function closeModal() {
+      els.modal.classList.remove('open');
+      els.modal.setAttribute('aria-hidden', 'true');
+      modalConfirmAction = null;
+      modalCancelAction = null;
+    }
+
+    function showAlert(message, buttonText = 'OK', afterClose = null) {
+      els.modalMessage.textContent = message;
+      els.modalCancel.style.display = 'none';
+      els.modalConfirm.textContent = buttonText;
+      els.modalConfirm.className = 'custom-modal-button';
+
+      modalConfirmAction = () => {
+        closeModal();
+        if (afterClose) afterClose();
+      };
+      modalCancelAction = null;
+
+      els.modal.classList.add('open');
+      els.modal.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => els.modalConfirm.focus());
+    }
+
+    function showConfirm(message, confirmText, onConfirm, danger = false) {
+      els.modalMessage.textContent = message;
+      els.modalCancel.style.display = 'inline-block';
+      els.modalCancel.textContent = 'Cancel';
+      els.modalConfirm.textContent = confirmText;
+      els.modalConfirm.className = danger
+        ? 'custom-modal-button custom-modal-delete'
+        : 'custom-modal-button';
+
+      modalConfirmAction = () => {
+        closeModal();
+        onConfirm();
+      };
+      modalCancelAction = closeModal;
+
+      els.modal.classList.add('open');
+      els.modal.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(() => els.modalConfirm.focus());
+    }
+
+    els.modalConfirm.addEventListener('click', () => {
+      if (modalConfirmAction) modalConfirmAction();
+    });
+
+    els.modalCancel.addEventListener('click', () => {
+      if (modalCancelAction) modalCancelAction();
+      else closeModal();
+    });
+
+    els.modal.addEventListener('click', event => {
+      if (event.target === els.modal) {
+        if (modalCancelAction) modalCancelAction();
+        else closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && els.modal.classList.contains('open')) {
+        if (modalCancelAction) modalCancelAction();
+        else closeModal();
+      }
+    });
+
+    /* =========================
+       SUBMIT
+       ========================= */
+
+    async function submitEntry() {
+      if (currentRole !== 'user' && currentRole !== 'master') {
+        showAlert('Scan the charger USER or MASTER QR to submit a charging session.');
+        return;
+      }
+
+      const name = els.name.value.trim();
+      const hoursValue = els.hours.value.trim();
+      els.hours.blur();
+
+      if (!name && !hoursValue) {
+        showAlert('Please enter your Name and Hours.');
+        return;
+      }
+      if (!name) {
+        showAlert('Please enter your Name.');
+        return;
+      }
+      if (!hoursValue) {
+        showAlert('Please enter Hours.');
+        return;
+      }
+
+      const hours = Number(hoursValue);
+      if (!Number.isFinite(hours) || hours <= 0) {
+        showAlert('Please enter valid Hours greater than 0.');
+        return;
+      }
+      if (hours > MAX_HOURS) {
+        showAlert('Max Time of 4.5 hrs.', 'OK', () => {
+          els.hours.value = '';
+          els.hours.focus();
+        });
+        return;
+      }
+
+      try {
+        localStorage.setItem(LAST_NAME_KEY, name);
+      } catch (_) {}
+
+      stopCurrentLoad();
+      setStatusLoading('SAVING');
+      els.submit.disabled = true;
+
+      try {
+        const payload = await apiRequest('/submit', {
+          method: 'POST',
+          body: JSON.stringify({ name, hours })
+        });
+
+        els.hours.value = '';
+        acceptMutationData(payload);
+      } catch (error) {
+        console.error('Submit error:', error);
+        renderTable();
+        setStatusError('SAVE FAILED');
+        showAlert(error.message || 'Error saving session.');
+      } finally {
+        els.submit.disabled = !(currentRole === 'user' || currentRole === 'master');
+      }
+    }
+
+    els.form.addEventListener('submit', event => {
+      event.preventDefault();
+      submitEntry();
+    });
+
+    els.hours.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        els.hours.blur();
+      }
+    });
+
+    /* =========================
+       END / DELETE / DELETE ALL
+       ========================= */
+
+    async function endSession(start) {
+      if (currentRole !== 'user' && currentRole !== 'master') return;
+
+      markRowBusy(start, 'ENDING');
+      stopCurrentLoad();
+      setStatusLoading('ENDING');
+
+      try {
+        const payload = await apiRequest('/end', {
+          method: 'POST',
+          body: JSON.stringify({ start })
+        });
+        acceptMutationData(payload);
+      } catch (error) {
+        console.error('End error:', error);
+        renderTable();
+        setStatusError('END FAILED');
+        showAlert(error.message || 'Error ending session.');
+      }
+    }
+
+    function deleteEntry(start) {
+      if (currentRole !== 'user' && currentRole !== 'master') return;
+
+      showConfirm(
+        'DELETE ACTIVE SESSION? It will be archived first.',
+        'Delete',
+        async () => {
+          markRowBusy(start, 'DELETING');
+          stopCurrentLoad();
+          setStatusLoading('DELETING');
+
+          try {
+            const payload = await apiRequest('/delete', {
+              method: 'POST',
+              body: JSON.stringify({ start })
+            });
+            acceptMutationData(payload);
+          } catch (error) {
+            console.error('Delete error:', error);
+            renderTable();
+            setStatusError('DELETE FAILED');
+            showAlert(error.message || 'Error deleting session.');
+          }
+        },
+        true
+      );
+    }
+
+    function deleteAllEntries() {
+      if (currentRole !== 'master') {
+        showAlert('MASTER authorization is required.');
+        return;
+      }
+
+      showConfirm(
+        'DELETE ALL ENTRIES? Every entry will be archived before the live list is cleared.',
+        'Delete All',
+        async () => {
+          stopCurrentLoad();
+          setStatusLoading('DELETING ALL');
+          els.deleteAll.disabled = true;
+
+          try {
+            const payload = await apiRequest('/delete-all', {
+              method: 'POST',
+              body: JSON.stringify({})
+            });
+            acceptMutationData(payload);
+          } catch (error) {
+            console.error('Delete all error:', error);
+            renderTable();
+            setStatusError('DELETE FAILED');
+            showAlert(error.message || 'Error deleting all sessions.');
+          } finally {
+            els.deleteAll.disabled = false;
+          }
+        },
+        true
+      );
+    }
+
+    els.deleteAll.addEventListener('click', deleteAllEntries);
+
+    function markRowBusy(start, label) {
+      const rows = document.querySelectorAll('#statusTable tbody tr[data-start]');
+      for (const row of rows) {
+        if (row.getAttribute('data-start') === start) {
+          row.classList.remove('active-row');
+          const timeCell = row.querySelector('td[data-label="Time Left"]');
+          const actionCell = row.querySelector('td[data-label=""]');
+          if (timeCell) timeCell.innerHTML = `<b style="font-size:1.25em">${escapeHtml(label)}</b>`;
+          if (actionCell) actionCell.innerHTML = '';
+          break;
+        }
+      }
+    }
+
+    /* =========================
+       TABLE
+       ========================= */
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatTimeLeft(remainingMs) {
+      if (!(remainingMs > 0)) return '<b>Session Ended</b>';
+
+      const totalMinutes = Math.max(0, Math.ceil(remainingMs / 60000));
+      const hoursLeft = Math.floor(totalMinutes / 60);
+      const minsLeft = totalMinutes % 60;
+
+      return `${hoursLeft < 1 ? '' : `<b style="font-size:1.5em">${hoursLeft}</b> hr  `}<b style="font-size:1.5em">${minsLeft}</b> mins`;
+    }
+
+    function renderTable() {
+      els.tbody.innerHTML = '';
+      const nowMs = Date.now();
+      const authorized = currentRole === 'user' || currentRole === 'master';
+
+      currentData.forEach(entry => {
+        const startDate = new Date(entry.Start);
+        const endDate = new Date(entry.End);
+        const remainingMs = endDate.getTime() - nowMs;
+        const active = Number.isFinite(remainingMs) && remainingMs > 0;
+
+        const timeStart = Number.isNaN(startDate.getTime())
+          ? '--:--'
+          : startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStart = Number.isNaN(startDate.getTime())
+          ? '--/--'
+          : startDate.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+        const formattedStart = `<span style="font-size:0.8em">${escapeHtml(dateStart)}</span> - <b>${escapeHtml(timeStart)}</b>`;
+
+        const timeEnd = Number.isNaN(endDate.getTime())
+          ? '--:--'
+          : endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateEnd = Number.isNaN(endDate.getTime())
+          ? '--/--'
+          : endDate.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+        const formattedEnd = `<span style="font-size:0.8em">${escapeHtml(dateEnd)}</span> - <b>${escapeHtml(timeEnd)}</b>`;
+
+        const row = document.createElement('tr');
+        if (active) row.classList.add('active-row');
+        row.setAttribute('data-start', entry.Start);
+
+        const actions = active && authorized
+          ? `<div class="row-action-group">
+               <button class="mini-button delete" type="button" data-action="delete">X</button>
+               <button class="mini-button end" type="button" data-action="end">End</button>
+             </div>`
+          : '';
+
+        row.innerHTML = `
+          <td data-label="Name">${escapeHtml(entry.Name)}</td>
+          <td data-label="Start">${formattedStart}</td>
+          <td data-label="End">${formattedEnd}</td>
+          <td data-label="Time Left">${formatTimeLeft(remainingMs)}</td>
+          <td data-label="">${actions}</td>
+        `;
+
+        if (active && authorized) {
+          const deleteButton = row.querySelector('[data-action="delete"]');
+          const endButton = row.querySelector('[data-action="end"]');
+          if (deleteButton) deleteButton.addEventListener('click', () => deleteEntry(entry.Start));
+          if (endButton) endButton.addEventListener('click', () => endSession(entry.Start));
+        }
+
+        els.tbody.appendChild(row);
+      });
+    }
+
+    /* =========================
+       HOME / PAY LOCAL VIEWS
+       ========================= */
+
+    function switchView(destination) {
+      if (destination === currentView) return;
+
+      const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      els.curtain.classList.add('covered');
+
+      const swap = () => {
+        currentView = destination;
+        const showPay = destination === 'pay';
+        els.homeView.hidden = showPay;
+        els.payView.hidden = !showPay;
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+        if (showPay) {
+          els.kwhInput.value = '';
+          els.payHoursInput.value = '';
+          updatePayCalculators();
+        }
+
+        requestAnimationFrame(() => {
+          els.curtain.classList.remove('covered');
+        });
+      };
+
+      if (reduceMotion) {
+        swap();
+      } else {
+        window.setTimeout(swap, 120);
+      }
+    }
+
+    els.payButton.addEventListener('click', () => switchView('pay'));
+    els.homeButton.addEventListener('click', () => switchView('home'));
+
+    /* =========================
+       PAY CALCULATORS
+       ========================= */
+
+    function money(value) {
+      return `$${Math.max(0, value).toFixed(2)}`;
+    }
+
+    function updatePayCalculators() {
+      const kwh = Number(els.kwhInput.value);
+      const hours = Number(els.payHoursInput.value);
+
+      els.kwhResult.textContent = money(Number.isFinite(kwh) && kwh > 0 ? kwh * 0.20 : 0);
+      els.hoursResult.textContent = money(Number.isFinite(hours) && hours > 0 ? hours * 2.00 : 0);
+    }
+
+    els.kwhInput.addEventListener('input', updatePayCalculators);
+    els.payHoursInput.addEventListener('input', updatePayCalculators);
+
+    /* =========================
+       INITIAL STATE
+       ========================= */
+
+    try {
+      const lastName = localStorage.getItem(LAST_NAME_KEY) || localStorage.getItem('lastName') || '';
+      if (lastName) els.name.value = lastName;
+    } catch (_) {}
+
+    const cachedRole = getStoredRole();
+    currentToken = getStoredAuthToken();
+    currentRole = currentToken ? cachedRole : 'none';
+    applyAuthorizationUI();
+
+    restoreCachedData();
+
+    const incomingToken = getIncomingAuthToken();
+    const startupToken = incomingToken || currentToken;
+    loadData({ tokenCandidate: startupToken, startup: true });
+
+    /* Keep Time Left accurate locally without any Google/Cloudflare refresh. */
+    window.setInterval(() => {
+      if (currentView === 'home' && currentData.length) renderTable();
+    }, 30000);
+  </script>
+</body>
+</html>
+
