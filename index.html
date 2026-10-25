@@ -84,10 +84,15 @@
     }
 
     button:focus-visible,
-    input:focus-visible,
     a:focus-visible {
-      outline: 0.16rem solid #ffffff;
-      outline-offset: 0.14rem;
+      outline: 0.14rem solid #ffffff;
+      outline-offset: 0.12rem;
+    }
+
+    input:focus,
+    input:focus-visible {
+      outline: none !important;
+      box-shadow: var(--shadow-soft) !important;
     }
 
     .app-shell {
@@ -188,6 +193,19 @@
 
     .field::placeholder {
       color: #666666;
+    }
+
+    .field:focus,
+    .field:focus-visible {
+      background: var(--gray-2) !important;
+      color: #2a2a2a !important;
+      border-color: #bdbdbd !important;
+    }
+
+    .field::selection,
+    .calculator-input::selection {
+      background: rgba(255,255,255,0.18);
+      color: inherit;
     }
 
     .field:disabled {
@@ -508,6 +526,14 @@
 
     .bottom-actions .master-delete-mode:active {
       background: var(--red-press) !important;
+    }
+
+    .bottom-actions.master-mode {
+      grid-template-columns: 1fr;
+    }
+
+    .bottom-actions.master-mode #passwordButton {
+      display: none !important;
     }
 
     /* PAY VIEW */
@@ -925,7 +951,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.5">V1.8</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.9">V1.9</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -981,7 +1007,7 @@
         </div>
       </div>
 
-      <div class="bottom-actions">
+      <div id="bottomActions" class="bottom-actions">
         <a
           id="passwordButton"
           class="link-button"
@@ -1138,6 +1164,8 @@
       masterZone: document.getElementById('masterZone'),
       deleteAll: document.getElementById('deleteAllButton'),
       payButton: document.getElementById('payButton'),
+      passwordButton: document.getElementById('passwordButton'),
+      bottomActions: document.getElementById('bottomActions'),
       homeButton: document.getElementById('homeButton'),
       kwhInput: document.getElementById('kwhInput'),
       payHoursInput: document.getElementById('payHoursInput'),
@@ -1263,10 +1291,12 @@
       if (els.authNote) els.authNote.hidden = true;
       els.masterZone.classList.remove('visible');
       const isMaster = currentRole === 'master';
+      if (els.bottomActions) els.bottomActions.classList.toggle('master-mode', isMaster);
+      if (els.passwordButton) els.passwordButton.hidden = isMaster;
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.8';
+      els.revisionBox.textContent = 'V1.9';
       renderTable();
     }
 
@@ -1624,7 +1654,7 @@
 
     function deleteEntry(start) {
       showConfirm(
-        'DELETE ACTIVE SESSION? It will be archived first.',
+        'DELETE SESSION? It will be archived first.',
         'Delete',
         async () => {
           markRowBusy(start, 'DELETING');
@@ -1751,10 +1781,10 @@
         if (active) row.classList.add('active-row');
         row.setAttribute('data-start', entry.Start);
 
-        const actions = active && authorized
+        const actions = authorized
           ? `<div class="row-action-group">
                <button class="mini-button delete" type="button" data-action="delete">X</button>
-               <button class="mini-button end" type="button" data-action="end">End</button>
+               ${active ? '<button class="mini-button end" type="button" data-action="end">End</button>' : ''}
              </div>`
           : '';
 
@@ -1763,10 +1793,10 @@
           <td data-label="Start">${formattedStart}</td>
           <td data-label="End">${formattedEnd}</td>
           <td data-label="Time Left">${formatTimeLeft(remainingMs)}</td>
-          ${active ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
+          ${authorized ? `<td class="action-cell" data-label="">${actions}</td>` : ''}
         `;
 
-        if (active && authorized) {
+        if (authorized) {
           const deleteButton = row.querySelector('[data-action="delete"]');
           const endButton = row.querySelector('[data-action="end"]');
           if (deleteButton) deleteButton.addEventListener('click', () => deleteEntry(entry.Start));
