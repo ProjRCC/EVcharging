@@ -113,7 +113,7 @@
     body.home-active .app-shell {
       height: var(--ev-view-height, 100dvh);
       min-height: 0;
-      padding-bottom: calc(6.15rem + env(safe-area-inset-bottom));
+      padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
       overflow: hidden;
     }
 
@@ -461,10 +461,30 @@
     }
 
 
+
+    .footer-fade {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 48;
+      height: calc(7.9rem + env(safe-area-inset-bottom));
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(68, 68, 68, 0) 0%,
+        rgba(68, 68, 68, 0.28) 16%,
+        rgba(68, 68, 68, 0.72) 34%,
+        rgba(68, 68, 68, 0.96) 52%,
+        var(--gray-7) 66%
+      );
+      box-shadow: 0 -0.55rem 1.15rem rgba(0, 0, 0, 0.24);
+    }
+
     .refresh-dock {
       position: fixed;
       left: 50%;
-      bottom: calc(4.35rem + env(safe-area-inset-bottom));
+      bottom: calc(4.95rem + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       z-index: 49;
       width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
@@ -1107,7 +1127,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.22">V1.22</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.23">V1.23</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1158,6 +1178,8 @@
           </button>
         </div>
       </div>
+
+      <div class="footer-fade" aria-hidden="true"></div>
 
       <div class="refresh-dock">
         <div id="statusIndicator" role="status" aria-live="polite">
@@ -1471,7 +1493,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.22';
+      els.revisionBox.textContent = 'V1.23';
       renderTable();
     }
 
