@@ -113,7 +113,7 @@
     body.home-active .app-shell {
       height: var(--ev-view-height, 100dvh);
       min-height: 0;
-      padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+      padding-bottom: calc(5.85rem + env(safe-area-inset-bottom));
       overflow: hidden;
     }
 
@@ -469,12 +469,12 @@
       right: 0;
       bottom: 0;
       z-index: 48;
-      height: calc(8.25rem + 25px + env(safe-area-inset-bottom));
+      height: calc(6.2rem + 28px + env(safe-area-inset-bottom));
       pointer-events: none;
       background: linear-gradient(
         to bottom,
         rgba(68, 68, 68, 0) 0,
-        var(--gray-7) 25px,
+        var(--gray-7) 28px,
         var(--gray-7) 100%
       );
       box-shadow: none;
@@ -484,7 +484,7 @@
       position: fixed;
       pointer-events: none;
       left: 50%;
-      bottom: calc(4.95rem + env(safe-area-inset-bottom));
+      bottom: calc(4.30rem + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       z-index: 49;
       width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
@@ -781,7 +781,7 @@
     .pay-warning strong {
       display: block;
       margin-top: 0.28rem;
-      color: #ffb1b1;
+      color: #ff6b6b;
       font-size: 0.9rem;
       letter-spacing: 0.02em;
     }
@@ -1128,7 +1128,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.25">V1.25</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.26">V1.26</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1494,7 +1494,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.25';
+      els.revisionBox.textContent = 'V1.26';
       renderTable();
     }
 
