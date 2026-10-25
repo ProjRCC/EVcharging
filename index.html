@@ -559,7 +559,7 @@
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      background: rgba(35, 35, 35, 0.42);
+      background: rgba(68, 68, 68, 0.72);
       backdrop-filter: blur(0.28rem);
       -webkit-backdrop-filter: blur(0.28rem);
       opacity: 0;
@@ -578,7 +578,7 @@
       width: min(92vw, 22rem);
       padding: 1rem;
       border-radius: 1rem;
-      background: rgba(102, 102, 102, 0.90);
+      background: rgba(102, 102, 102, 0.97);
       backdrop-filter: blur(0.42rem);
       -webkit-backdrop-filter: blur(0.42rem);
       box-shadow: 0 0.55rem 1.45rem rgba(0, 0, 0, 0.42);
@@ -829,7 +829,7 @@
       grid-template-areas:
         "venmo payor paypal"
         "home home home";
-      gap: 0.45rem 0.72rem;
+      gap: 0.90rem 0.72rem;
     }
 
     .payment-links {
@@ -967,13 +967,13 @@
       background: var(--gray-7);
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.16s ease, visibility 0s linear 0.16s;
+      transition: opacity 0.50s ease, visibility 0s linear 0.50s;
     }
 
     #viewCurtain.covered {
       opacity: 1;
       visibility: visible;
-      transition: opacity 0.12s ease;
+      transition: none;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1062,7 +1062,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.14">V1.14</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.15">V1.15</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1169,7 +1169,7 @@
 
         <section class="calculator-card" aria-label="Pay by time calculator">
           <h2 class="calculator-title">Pay by Time</h2>
-          <div class="calculator-rate">$2.00 / hour</div>
+          <div class="calculator-rate">$1.75 / hour</div>
           <input
             id="payHoursInput"
             class="calculator-input"
@@ -1423,7 +1423,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.14';
+      els.revisionBox.textContent = 'V1.15';
       renderTable();
     }
 
@@ -1726,6 +1726,21 @@
     els.hoursDone.addEventListener('click', () => closeHoursPicker(true));
     els.hoursPicker.addEventListener('click', event => { if (event.target === els.hoursPicker) closeHoursPicker(false); });
 
+
+    function coverMutationCurtain() {
+      els.curtain.classList.add('covered');
+      els.curtain.setAttribute('aria-hidden', 'false');
+    }
+
+    function revealMutationCurtainAfterSettle() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          els.curtain.classList.remove('covered');
+          window.setTimeout(() => els.curtain.setAttribute('aria-hidden', 'true'), 520);
+        });
+      });
+    }
+
     /* =========================
        SUBMIT
        ========================= */
@@ -1766,6 +1781,7 @@
         localStorage.setItem(LAST_HOURS_KEY, String(hours));
       } catch (_) {}
 
+      coverMutationCurtain();
       stopCurrentLoad();
       setStatusLoading('SAVING');
       els.submit.disabled = true;
@@ -1785,6 +1801,7 @@
         showAlert(error.message || 'Error saving session.');
       } finally {
         els.submit.disabled = false;
+        revealMutationCurtainAfterSettle();
       }
     }
 
@@ -1799,6 +1816,7 @@
        ========================= */
 
     async function endSession(start) {
+      coverMutationCurtain();
       markRowBusy(start, 'ENDING');
       stopCurrentLoad();
       setStatusLoading('ENDING');
@@ -1814,6 +1832,8 @@
         renderTable();
         setStatusError('END FAILED');
         showAlert(error.message || 'Error ending session.');
+      } finally {
+        revealMutationCurtainAfterSettle();
       }
     }
 
@@ -1822,6 +1842,7 @@
         'DELETE SESSION? It will be archived first.',
         'Delete',
         async () => {
+          coverMutationCurtain();
           markRowBusy(start, 'DELETING');
           stopCurrentLoad();
           setStatusLoading('DELETING');
@@ -1837,6 +1858,8 @@
             renderTable();
             setStatusError('DELETE FAILED');
             showAlert(error.message || 'Error deleting session.');
+          } finally {
+            revealMutationCurtainAfterSettle();
           }
         },
         true
@@ -2036,7 +2059,7 @@
       const hours = numericFieldValue(els.payHoursInput);
 
       els.kwhResult.textContent = money(kwh > 0 ? kwh * 0.20 : 0);
-      els.hoursResult.textContent = money(hours > 0 ? hours * 2.00 : 0);
+      els.hoursResult.textContent = money(hours > 0 ? hours * 1.75 : 0);
     }
 
     function payUnitSuffix(input) {
