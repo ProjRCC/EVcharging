@@ -1257,7 +1257,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.44">V1.44</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.45">V1.45</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1553,7 +1553,8 @@
       const effectiveWidth = Math.min(550, cssWidth);
       const heightMultiplier = effectiveHeight / EFFECTIVE_HEIGHT_BASELINE;
       const widthMultiplier = Math.min(1, cssWidth / 1000);
-      const multiplier = heightMultiplier;
+      const dprBoost = dpr < 2.81 ? 1.20 : 1.00;
+      const multiplier = heightMultiplier * dprBoost;
 
       return {
         cssWidth,
@@ -1565,6 +1566,7 @@
         effectiveWidth,
         heightMultiplier,
         widthMultiplier,
+        dprBoost,
         multiplier
       };
     }
@@ -1866,6 +1868,7 @@
         <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ ${Number(m.adjDPR || 1).toFixed(2)}</div>
         <div>EFFECTIVE ${Math.round(m.effectiveWidth)} × ${Math.round(m.effectiveHeight)}</div>
         <div>H MULT ${Number(m.heightMultiplier || 0).toFixed(3)}</div>
+        <div>DPR BOOST ${Number(m.dprBoost || 1).toFixed(2)}×</div>
         <div>APPLIED ${Number(m.multiplier || 0).toFixed(3)}</div>
         <div>ASPECT ${aspect.toFixed(3)} • ${orientation}</div>
         <div>CURRENT VIEW ${activeView}</div>
@@ -1886,7 +1889,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.44';
+      els.revisionBox.textContent = 'V1.45';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
