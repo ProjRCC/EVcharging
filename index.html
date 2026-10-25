@@ -1253,7 +1253,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.37">V1.37</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.38">V1.38</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1587,6 +1587,13 @@
 
     applyViewportScale();
     window.addEventListener('resize', scheduleViewportScale, { passive: true });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (els.controlCenter.classList.contains('open')) {
+          requestAnimationFrame(renderScreenInfo);
+        }
+      }, { passive: true });
+    }
     window.addEventListener('orientationchange', scheduleViewportScale, { passive: true });
 
     /* =========================
@@ -1667,10 +1674,14 @@
 
     function openControlCenter() {
       paintControlCenterMode();
-      renderScreenInfo();
       els.controlCenter.classList.add('open');
       els.controlCenter.setAttribute('aria-hidden', 'false');
+
+      renderScreenInfo();
       requestAnimationFrame(renderScreenInfo);
+      window.setTimeout(renderScreenInfo, 180);
+      window.setTimeout(renderScreenInfo, 420);
+      window.setTimeout(renderScreenInfo, 800);
     }
 
     function requestControlCenterAccess() {
@@ -1860,7 +1871,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.37';
+      els.revisionBox.textContent = 'V1.38';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
