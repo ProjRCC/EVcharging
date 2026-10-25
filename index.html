@@ -43,6 +43,7 @@
       --refresh-inactive: #9b9b9b;
       --shadow: 0 0.23rem 0.62rem rgba(0, 0, 0, 0.28);
       --shadow-soft: 0 0.16rem 0.42rem rgba(0, 0, 0, 0.22);
+      --home-gap: 0.42rem;
     }
 
     * {
@@ -143,7 +144,7 @@
     }
 
     h1 {
-      margin: 0.5rem 2.6rem 0.95rem;
+      margin: 0.5rem 2.6rem var(--home-gap);
       color: #ffffff;
       font-size: 1.78rem;
       font-weight: 900;
@@ -171,8 +172,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.42rem;
-      margin: 0 0 0.34rem;
+      gap: var(--home-gap);
+      margin: 0;
     }
 
     .field {
@@ -339,7 +340,7 @@
       flex: 1 1 auto;
       min-height: 0;
       width: 100%;
-      margin: 0.22rem 0 0.18rem;
+      margin: var(--home-gap) 0 0;
       padding: 0 0 7.2rem;
       overflow-y: auto;
       overflow-x: hidden;
@@ -469,7 +470,7 @@
       right: 0;
       bottom: 0;
       z-index: 48;
-      height: calc(6.2rem + 28px + env(safe-area-inset-bottom));
+      height: calc(5.95rem + 28px + env(safe-area-inset-bottom));
       pointer-events: none;
       background: linear-gradient(
         to bottom,
@@ -484,7 +485,7 @@
       position: fixed;
       pointer-events: none;
       left: 50%;
-      bottom: calc(4.30rem + env(safe-area-inset-bottom));
+      bottom: calc(4.04rem + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       z-index: 49;
       width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
@@ -1059,7 +1060,7 @@
 
       tr {
         display: block;
-        margin-bottom: 0.66rem;
+        margin-bottom: var(--home-gap);
         border: 1px solid #666666;
         border-radius: 0.62rem;
         overflow: hidden;
@@ -1128,7 +1129,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.26">V1.26</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.27">V1.27</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1494,7 +1495,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.26';
+      els.revisionBox.textContent = 'V1.27';
       renderTable();
     }
 
