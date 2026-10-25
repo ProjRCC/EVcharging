@@ -47,6 +47,8 @@
       --home-gap: 0.42rem;
       --footer-button-height: 3.30rem;
       --footer-bottom: 0.65rem;
+      --content-max: 1000px;
+      --page-pad: 0.75rem;
     }
 
     * {
@@ -103,9 +105,9 @@
     .app-shell {
       position: relative;
       width: 100%;
-      max-width: 900px;
+      max-width: calc(var(--content-max) + (2 * var(--page-pad)));
       margin: 0 auto;
-      padding: 0.75rem 0.75rem 1rem;
+      padding: var(--page-pad) var(--page-pad) 1rem;
     }
 
     body.home-active {
@@ -153,6 +155,11 @@
       font-weight: 900;
       line-height: 1.08;
       text-align: center;
+    }
+
+    .revision-box.master-tappable {
+      cursor: pointer;
+      user-select: none;
     }
 
     .revision-box {
@@ -355,14 +362,15 @@
 
     .table-container {
       width: 100%;
-      overflow-x: auto;
-      margin: 0 0 0.75rem;
+      max-width: var(--content-max);
+      overflow-x: hidden;
+      margin: 0 auto 0.75rem;
       border-radius: 0.58rem;
     }
 
     table {
       width: 100%;
-      max-width: 800px;
+      max-width: var(--content-max);
       margin: 0 auto;
       border-collapse: collapse;
       overflow: hidden;
@@ -491,7 +499,7 @@
       bottom: calc(var(--footer-bottom) + var(--footer-button-height) + var(--home-gap) + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       z-index: 49;
-      width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
+      width: min(calc(100vw - (2 * var(--page-pad))), var(--content-max));
       pointer-events: none;
     }
 
@@ -508,7 +516,7 @@
       bottom: calc(var(--footer-bottom) + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       z-index: 50;
-      width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
+      width: min(calc(100vw - (2 * var(--page-pad))), var(--content-max));
       margin: 0;
       display: grid;
       grid-template-columns: 3fr 7fr;
@@ -713,7 +721,8 @@
 
 
     .pay-intro {
-      width: min(94%, 40rem);
+      width: 100%;
+      max-width: var(--content-max);
       margin: 0 auto 0.48rem;
       color: #ffffff;
       font-size: 0.9rem;
@@ -723,7 +732,8 @@
     }
 
     .pay-warning {
-      width: min(94%, 40rem);
+      width: 100%;
+      max-width: var(--content-max);
       margin: 0 auto 0.52rem;
       padding: 0.62rem 0.72rem;
       border-radius: 0.72rem;
@@ -778,7 +788,7 @@
 
     .calculator-grid {
       width: 100%;
-      max-width: 42rem;
+      max-width: var(--content-max);
       margin: 0 auto 0.35rem;
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
@@ -869,7 +879,7 @@
       bottom: calc(0.55rem + env(safe-area-inset-bottom));
       transform: translateX(-50%);
       z-index: 55;
-      width: min(calc(100vw - 1.5rem), calc(900px - 1.5rem));
+      width: min(calc(100vw - (2 * var(--page-pad))), var(--content-max));
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       grid-template-areas:
@@ -934,6 +944,64 @@
 
     body.keyboard-open .pay-bottom-dock {
       display: none !important;
+    }
+
+
+    .control-center-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(85, 85, 85, 0.94);
+      backdrop-filter: blur(0.3rem);
+      -webkit-backdrop-filter: blur(0.3rem);
+    }
+
+    .control-center-overlay.open {
+      display: flex;
+    }
+
+    .control-center-box {
+      width: min(92vw, 24rem);
+      padding: 1rem;
+      border-radius: 1rem;
+      background: var(--gray-8);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .control-center-title {
+      margin: 0 0 var(--home-gap);
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .control-center-mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--home-gap);
+    }
+
+    .control-center-mode .action-button {
+      width: 100%;
+      min-height: 3rem;
+    }
+
+    .control-center-mode .selected-mode {
+      outline: 0.16rem solid #fff;
+      outline-offset: 0.08rem;
+    }
+
+    .control-center-close {
+      width: 100%;
+      margin-top: var(--home-gap);
+      min-height: 2.8rem;
+      background: #555;
     }
 
     /* MODAL */
@@ -1111,7 +1179,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.31">V1.31</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.34">V1.34</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1268,6 +1336,19 @@
     </section>
   </main>
 
+
+  <!-- MASTER CONTROL CENTER -->
+  <div id="controlCenter" class="control-center-overlay" aria-hidden="true">
+    <div class="control-center-box" role="dialog" aria-modal="true" aria-labelledby="controlCenterTitle">
+      <div id="controlCenterTitle" class="control-center-title">CONTROL CENTER</div>
+      <div class="control-center-mode">
+        <button id="ccMaster" class="action-button" type="button">MASTER</button>
+        <button id="ccRegular" class="action-button" type="button">REGULAR</button>
+      </div>
+      <button id="ccClose" class="action-button control-center-close" type="button">HOME</button>
+    </div>
+  </div>
+
   <!-- HOURS PICKER -->
   <div id="hoursPicker" class="hours-picker-overlay" aria-hidden="true">
     <div class="hours-picker-box" role="dialog" aria-modal="true" aria-labelledby="hoursPickerTitle">
@@ -1304,6 +1385,9 @@
     const API_BASE = 'https://evcharging.projrcc.workers.dev';
     const AUTH_STORAGE_KEY = 'EVCharging:authToken:V1';
     const ROLE_STORAGE_KEY = 'EVCharging:authRole:V1';
+    const CC_UNLOCK_KEY = 'EVCharging:ccUnlocked:V1';
+    const USER_AUTH_TOKEN = '6KkzWMiX2zR7z7v208SJlbsX6JtCCDyZscGh';
+    const MASTER_AUTH_TOKEN = 'X7qK2mV9R4zN8pT6cL3wH5jF1sD0bYUa';
     const DATA_CACHE_KEY = 'EVCharging:dataCache:V1';
     const LAST_NAME_KEY = 'EVCharging:lastName:V1';
     const LAST_HOURS_KEY = 'EVCharging:lastHours:V1';
@@ -1329,6 +1413,10 @@
       payView: document.getElementById('payView'),
       curtain: document.getElementById('viewCurtain'),
       revisionBox: document.getElementById('revisionBox'),
+      controlCenter: document.getElementById('controlCenter'),
+      ccMaster: document.getElementById('ccMaster'),
+      ccRegular: document.getElementById('ccRegular'),
+      ccClose: document.getElementById('ccClose'),
       form: document.getElementById('chargingForm'),
       name: document.getElementById('name'),
       hours: document.getElementById('hours'),
@@ -1463,6 +1551,100 @@
       applyAuthorizationUI();
     }
 
+
+    function isControlCenterUnlocked() {
+      try {
+        return sessionStorage.getItem(CC_UNLOCK_KEY) === '1';
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function setControlCenterUnlocked(unlocked) {
+      try {
+        if (unlocked) sessionStorage.setItem(CC_UNLOCK_KEY, '1');
+        else sessionStorage.removeItem(CC_UNLOCK_KEY);
+      } catch (_) {}
+    }
+
+    function effectiveRole() {
+      return currentRole;
+    }
+
+    function paintControlCenterMode() {
+      els.ccMaster.classList.toggle('selected-mode', currentRole === 'master');
+      els.ccRegular.classList.toggle('selected-mode', currentRole === 'user');
+    }
+
+    function openControlCenter() {
+      paintControlCenterMode();
+      els.controlCenter.classList.add('open');
+      els.controlCenter.setAttribute('aria-hidden', 'false');
+    }
+
+    function requestControlCenterAccess() {
+      if (isControlCenterUnlocked()) {
+        openControlCenter();
+        return;
+      }
+
+      els.modalMessage.innerHTML = `
+        <div style="margin-bottom:0.75rem;">ENTER CONTROL CODE</div>
+        <input id="ccAccessInput"
+               type="text"
+               inputmode="text"
+               autocomplete="off"
+               autocapitalize="characters"
+               spellcheck="false"
+               maxlength="2"
+               style="width:100%;min-height:3rem;padding:0.65rem;border:1px solid #999;border-radius:0.65rem;background:#e7e7e7;color:#222;text-align:center;font-size:1.15rem;font-weight:900;text-transform:uppercase;"
+               aria-label="Control Center code">
+      `;
+      els.modalCancel.style.display = 'inline-block';
+      els.modalCancel.textContent = 'Cancel';
+      els.modalConfirm.textContent = 'Enter';
+      els.modalConfirm.className = 'custom-modal-button';
+
+      modalConfirmAction = () => {
+        const input = document.getElementById('ccAccessInput');
+        const code = String(input ? input.value : '').trim().toUpperCase();
+        if (code !== 'CC') {
+          if (input) {
+            input.value = '';
+            input.focus();
+          }
+          return;
+        }
+
+        setControlCenterUnlocked(true);
+        closeModal();
+        openControlCenter();
+      };
+      modalCancelAction = closeModal;
+
+      els.modal.classList.add('open');
+      els.modal.setAttribute('aria-hidden', 'false');
+
+      requestAnimationFrame(() => {
+        const input = document.getElementById('ccAccessInput');
+        if (input) input.focus();
+      });
+    }
+
+    function switchControlMode(role) {
+      const targetRole = role === 'master' ? 'master' : 'user';
+      const targetToken = targetRole === 'master' ? MASTER_AUTH_TOKEN : USER_AUTH_TOKEN;
+      saveAuthorization(targetToken, targetRole);
+      paintControlCenterMode();
+      loadData({ tokenCandidate: targetToken, startup: false });
+      restartAutoRefresh();
+    }
+
+    function closeControlCenter() {
+      els.controlCenter.classList.remove('open');
+      els.controlCenter.setAttribute('aria-hidden', 'true');
+    }
+
     function applyAuthorizationUI() {
       /* USER controls are always interactive in the frontend. Cloudflare is the
          authority for mutations; MASTER-only DELETE ALL remains role-gated. */
@@ -1471,13 +1653,15 @@
       els.submit.disabled = false;
       if (els.authNote) els.authNote.hidden = true;
       els.masterZone.classList.remove('visible');
-      const isMaster = currentRole === 'master';
+      const isMaster = effectiveRole() === 'master';
       if (els.bottomActions) els.bottomActions.classList.toggle('master-mode', isMaster);
       if (els.passwordButton) els.passwordButton.hidden = isMaster;
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.31';
+      els.revisionBox.textContent = 'V1.34';
+      els.revisionBox.classList.add('master-tappable');
+      els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
     }
 
@@ -1735,6 +1919,14 @@
         else closeModal();
       }
     });
+
+    els.modal.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && document.getElementById('ccAccessInput')) {
+        event.preventDefault();
+        if (modalConfirmAction) modalConfirmAction();
+      }
+    });
+
 
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape' && els.modal.classList.contains('open')) {
@@ -2041,7 +2233,7 @@
         else row.classList.add('ended-row');
         row.setAttribute('data-start', entry.Start);
 
-        const canDelete = active || currentRole === 'master';
+        const canDelete = active || effectiveRole() === 'master';
         const canEnd = active;
         const actions = (canDelete || canEnd)
           ? `<div class="row-action-group">
@@ -2104,8 +2296,26 @@
       }
     }
 
+
+    els.revisionBox.addEventListener('click', requestControlCenterAccess);
+
+    els.ccMaster.addEventListener('click', () => {
+      if (!isControlCenterUnlocked()) return;
+      switchControlMode('master');
+    });
+
+    els.ccRegular.addEventListener('click', () => {
+      if (!isControlCenterUnlocked()) return;
+      switchControlMode('user');
+    });
+
+    els.ccClose.addEventListener('click', closeControlCenter);
+    els.controlCenter.addEventListener('click', event => {
+      if (event.target === els.controlCenter) closeControlCenter();
+    });
+
     els.payButton.addEventListener('click', () => {
-      if (currentRole === 'master') {
+      if (effectiveRole() === 'master') {
         deleteAllEntries();
       } else {
         switchView('pay');
@@ -2316,17 +2526,30 @@
     const cachedRole = getStoredRole();
     const storedToken = getStoredAuthToken();
 
-    /* A QR token is provisionally USER-authorized for presentation immediately.
-       Cloudflare remains authoritative for every write and will reject any bad token.
-       A verified MASTER response upgrades this state after /status returns. */
-    currentToken = incomingToken || storedToken;
-    currentRole = incomingToken ? 'user' : (currentToken ? cachedRole : 'none');
-
+    /* A fresh QR/auth link resets Control Center access and determines the
+       starting mode. Once CC is entered, mode switching remains unlocked until
+       another auth link is opened. */
     if (incomingToken) {
+      setControlCenterUnlocked(false);
+
+      if (incomingToken === MASTER_AUTH_TOKEN) {
+        currentToken = MASTER_AUTH_TOKEN;
+        currentRole = 'master';
+      } else if (incomingToken === USER_AUTH_TOKEN) {
+        currentToken = USER_AUTH_TOKEN;
+        currentRole = 'user';
+      } else {
+        currentToken = incomingToken;
+        currentRole = 'user';
+      }
+
       try {
-        localStorage.setItem(AUTH_STORAGE_KEY, incomingToken);
-        localStorage.setItem(ROLE_STORAGE_KEY, 'user');
+        localStorage.setItem(AUTH_STORAGE_KEY, currentToken);
+        localStorage.setItem(ROLE_STORAGE_KEY, currentRole);
       } catch (_) {}
+    } else {
+      currentToken = storedToken;
+      currentRole = currentToken ? cachedRole : 'none';
     }
 
     applyAuthorizationUI();
