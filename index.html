@@ -99,7 +99,9 @@
     }
 
     body.home-active {
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior-y: auto;
     }
 
     body.home-active .app-shell {
@@ -296,7 +298,8 @@
       padding: 0 0 0.18rem;
       overflow-y: auto;
       overflow-x: hidden;
-      overscroll-behavior: contain;
+      overscroll-behavior-x: contain;
+      overscroll-behavior-y: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-gutter: stable;
     }
@@ -876,7 +879,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.4">V1.4</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.5">V1.5</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1213,7 +1216,7 @@
       els.submit.disabled = !hasQrAccess;
       if (els.authNote) els.authNote.hidden = true;
       els.masterZone.classList.toggle('visible', currentRole === 'master');
-      els.revisionBox.textContent = 'V1.4';
+      els.revisionBox.textContent = 'V1.5';
       renderTable();
     }
 
