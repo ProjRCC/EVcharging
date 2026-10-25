@@ -728,7 +728,7 @@
     body.pay-active .app-shell {
       height: var(--ev-view-height, 100dvh);
       min-height: 0;
-      padding-bottom: calc(12.0rem + env(safe-area-inset-bottom));
+      padding-bottom: calc(9.0rem + env(safe-area-inset-bottom));
       overflow: hidden;
     }
 
@@ -906,15 +906,13 @@
       display: grid;
       grid-template-columns: 1fr;
       grid-template-areas:
-        "choice"
         "payments"
         "home";
       gap: 0.48rem;
     }
 
-    .pay-choice-bottom {
-      grid-area: choice;
-      margin: 0;
+    .pay-choice-after-calculators {
+      margin: 0 auto 0.48rem;
       padding: 0.48rem 0.62rem;
       background: var(--gray-8);
       box-shadow: var(--shadow-soft);
@@ -1289,7 +1287,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.52">V1.52</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.53">V1.53</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1408,14 +1406,14 @@
         </section>
       </div>
 
-      <div class="pay-bottom-dock">
-        <div class="pay-warning pay-choice-box pay-choice-bottom">
-          <div class="pay-warning-choice">
-            Choose either actual energy used from Tesla/other app or approximate charging time.
-            <span class="info-icon" role="img" aria-label="More information coming later">i</span>
-          </div>
+      <div class="pay-warning pay-choice-box pay-choice-after-calculators">
+        <div class="pay-warning-choice">
+          Choose either actual energy used from Tesla/other app or approximate charging time.
+          <span class="info-icon" role="img" aria-label="More information coming later">i</span>
         </div>
+      </div>
 
+      <div class="pay-bottom-dock">
       <div class="payment-links">
         <a
           class="payment-link"
@@ -1672,13 +1670,13 @@
         const protectedGap = Math.max(6, rootFont * 0.42);
 
         if (viewName === 'pay') {
-          const calculator = document.querySelector('#payView .calculator-grid');
+          const payContentEnd = document.querySelector('#payView .pay-choice-after-calculators');
           const dock = document.querySelector('#payView .pay-bottom-dock');
-          if (!calculator || !dock) return true;
+          if (!payContentEnd || !dock) return true;
 
-          const calculatorBottom = calculator.getBoundingClientRect().bottom;
+          const contentBottom = payContentEnd.getBoundingClientRect().bottom;
           const dockTop = dock.getBoundingClientRect().top;
-          return calculatorBottom + protectedGap <= dockTop;
+          return contentBottom + protectedGap <= dockTop;
         }
 
         const sessionShell = document.querySelector('#homeView .session-shell');
@@ -2060,7 +2058,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.52';
+      els.revisionBox.textContent = 'V1.53';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
