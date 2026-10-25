@@ -1257,7 +1257,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.43">V1.43</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.44">V1.44</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1482,7 +1482,6 @@
     const MAX_HOURS = 4.5;
     const MIN_ADJ_DPR = 2.00;
     const EFFECTIVE_HEIGHT_BASELINE = 2034;
-    const MIN_GLOBAL_MULTIPLIER = 0.70;
 
     let currentData = [];
     let currentRole = 'none';
@@ -1549,20 +1548,19 @@
       const cssHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
       const dpr = Math.max(0.1, Number(window.devicePixelRatio) || 1);
       const adjDPR = adjustedDpr(dpr);
-      const effectiveHeight = cssHeight * adjDPR;
+      const rawEffectiveHeight = cssHeight * adjDPR;
+      const effectiveHeight = Math.max(EFFECTIVE_HEIGHT_BASELINE, rawEffectiveHeight);
       const effectiveWidth = Math.min(550, cssWidth);
       const heightMultiplier = effectiveHeight / EFFECTIVE_HEIGHT_BASELINE;
       const widthMultiplier = Math.min(1, cssWidth / 1000);
-      const multiplier = Math.max(
-        MIN_GLOBAL_MULTIPLIER,
-        heightMultiplier
-      );
+      const multiplier = heightMultiplier;
 
       return {
         cssWidth,
         cssHeight,
         dpr,
         adjDPR,
+        rawEffectiveHeight,
         effectiveHeight,
         effectiveWidth,
         heightMultiplier,
@@ -1888,7 +1886,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.43';
+      els.revisionBox.textContent = 'V1.44';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
