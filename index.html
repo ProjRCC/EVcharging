@@ -501,6 +501,15 @@
       to { opacity: 1; }
     }
 
+
+    .bottom-actions .master-delete-mode {
+      background: var(--red) !important;
+    }
+
+    .bottom-actions .master-delete-mode:active {
+      background: var(--red-press) !important;
+    }
+
     /* PAY VIEW */
 
     body.pay-active {
@@ -916,7 +925,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.5">V1.7</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.5">V1.8</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1252,8 +1261,12 @@
       els.hours.disabled = false;
       els.submit.disabled = false;
       if (els.authNote) els.authNote.hidden = true;
-      els.masterZone.classList.toggle('visible', currentRole === 'master');
-      els.revisionBox.textContent = 'V1.7';
+      els.masterZone.classList.remove('visible');
+      const isMaster = currentRole === 'master';
+      els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
+      els.payButton.classList.toggle('master-delete-mode', isMaster);
+      els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
+      els.revisionBox.textContent = 'V1.8';
       renderTable();
     }
 
@@ -1801,7 +1814,13 @@
       }
     }
 
-    els.payButton.addEventListener('click', () => switchView('pay'));
+    els.payButton.addEventListener('click', () => {
+      if (currentRole === 'master') {
+        deleteAllEntries();
+      } else {
+        switchView('pay');
+      }
+    });
     els.homeButton.addEventListener('click', () => switchView('home'));
 
     /* =========================
