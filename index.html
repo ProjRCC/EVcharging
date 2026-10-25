@@ -96,7 +96,34 @@
       max-width: 900px;
       margin: 0 auto;
       padding: 0.75rem 0.75rem 1rem;
-      padding-bottom: calc(6.4rem + env(safe-area-inset-bottom));
+    }
+
+    body.home-active {
+      overflow: hidden;
+    }
+
+    body.home-active .app-shell {
+      height: var(--ev-view-height, 100dvh);
+      min-height: 0;
+      padding-bottom: calc(5.65rem + env(safe-area-inset-bottom));
+      overflow: hidden;
+    }
+
+    #homeView {
+      min-height: 0;
+    }
+
+    body.home-active #homeView {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    body.home-active #homeView > h1,
+    body.home-active #homeView > .charging-form,
+    body.home-active #homeView > .authorization-note {
+      flex: 0 0 auto;
     }
 
     .view {
@@ -117,8 +144,8 @@
     }
 
     .revision-box {
-      position: absolute;
-      top: 0.45rem;
+      position: fixed;
+      top: calc(0.45rem + env(safe-area-inset-top));
       right: 0.45rem;
       z-index: 40;
       min-width: 2.25rem;
@@ -138,6 +165,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 0.72rem;
       margin: 0 0 0.95rem;
     }
 
@@ -258,6 +286,19 @@
       font-weight: 700;
       line-height: 1.25;
       text-align: center;
+    }
+
+    .session-shell {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      margin: 0.52rem 0 0.62rem;
+      padding: 0 0 0.18rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
     }
 
     .table-container {
@@ -392,6 +433,59 @@
       min-width: 0;
       min-height: 3.3rem;
       padding: 0.9rem 0.45rem;
+    }
+
+    body.keyboard-open .bottom-actions {
+      display: none !important;
+    }
+
+    /* PORTRAIT-ONLY — same visual treatment as SimpleScramble. */
+    .rotate-portrait-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+      background: #ffffff;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .rotate-portrait-box {
+      width: min(420px, calc(100% - 36px));
+      padding: 24px 28px;
+      border: 0;
+      border-radius: 14px;
+      background: #e8e8e8;
+      color: #000000;
+      text-align: center;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: 0.45px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      opacity: 0;
+    }
+
+    @media (orientation: landscape) {
+      .rotate-portrait-overlay {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+      .rotate-portrait-box {
+        opacity: 1;
+        animation: evRotatePortraitIn 1s ease-out both;
+      }
+    }
+
+    @keyframes evRotatePortraitIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     /* PAY VIEW */
@@ -742,10 +836,14 @@
 </head>
 
 <body>
+  <div class="rotate-portrait-overlay" aria-hidden="true">
+    <div class="rotate-portrait-box">ROTATE TO PORTRAIT</div>
+  </div>
+
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1">V1</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.2">V1.2</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -782,25 +880,27 @@
         Scan the charger QR to add or manage a charging session.
       </div>
 
-      <div class="table-container">
-        <table id="statusTable">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Start</th>
-              <th>End</th>
-              <th class="time-left-header">Time Left</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <div class="session-shell" id="sessionShell">
+        <div class="table-container">
+          <table id="statusTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Start</th>
+                <th>End</th>
+                <th class="time-left-header">Time Left</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
 
-      <div id="masterZone" class="master-zone">
-        <button id="deleteAllButton" class="delete-all-btn" type="button">
-          Delete All
-        </button>
+        <div id="masterZone" class="master-zone">
+          <button id="deleteAllButton" class="delete-all-btn" type="button">
+            Delete All
+          </button>
+        </div>
       </div>
 
       <div class="bottom-actions">
@@ -1004,6 +1104,7 @@
       const metrics = getViewportMetrics();
       document.documentElement.style.fontSize = `${(16 * metrics.multiplier).toFixed(3)}px`;
       document.documentElement.style.setProperty('--ev-global-scale', metrics.multiplier.toFixed(5));
+      document.documentElement.style.setProperty('--ev-view-height', `${metrics.cssHeight}px`);
       document.documentElement.style.setProperty('--ev-effective-height', String(Math.round(metrics.effectiveHeight)));
       document.documentElement.style.setProperty('--ev-effective-width', String(Math.round(metrics.effectiveWidth)));
     }
@@ -1074,12 +1175,13 @@
 
     function applyAuthorizationUI() {
       const authorized = currentRole === 'user' || currentRole === 'master';
-      els.name.disabled = !authorized;
-      els.hours.disabled = !authorized;
-      els.submit.disabled = !authorized;
-      els.authNote.hidden = authorized;
+      const hasQrAccess = authorized || Boolean(currentToken);
+      els.name.disabled = !hasQrAccess;
+      els.hours.disabled = !hasQrAccess;
+      els.submit.disabled = !hasQrAccess;
+      els.authNote.hidden = hasQrAccess;
       els.masterZone.classList.toggle('visible', currentRole === 'master');
-      els.revisionBox.textContent = 'V1';
+      els.revisionBox.textContent = 'V1.2';
       renderTable();
     }
 
@@ -1385,7 +1487,7 @@
         setStatusError('SAVE FAILED');
         showAlert(error.message || 'Error saving session.');
       } finally {
-        els.submit.disabled = !(currentRole === 'user' || currentRole === 'master');
+        els.submit.disabled = !(currentRole === 'user' || currentRole === 'master' || currentToken);
       }
     }
 
@@ -1596,6 +1698,7 @@
       const swap = () => {
         currentView = destination;
         const showPay = destination === 'pay';
+        document.body.classList.toggle('home-active', !showPay);
         els.homeView.hidden = showPay;
         els.payView.hidden = !showPay;
         window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -1640,18 +1743,58 @@
     els.kwhInput.addEventListener('input', updatePayCalculators);
     els.payHoursInput.addEventListener('input', updatePayCalculators);
 
+    let payEnterDismissUntil = 0;
+
+    function dismissPayKeyboard(event) {
+      if (!event || event.key !== 'Enter') return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof event.stopImmediatePropagation === 'function') event.stopImmediatePropagation();
+      payEnterDismissUntil = Date.now() + 500;
+      const target = event.currentTarget;
+      if (target) {
+        target.blur();
+        target.setAttribute('readonly', 'readonly');
+        window.setTimeout(() => target.removeAttribute('readonly'), 120);
+      }
+    }
+
     [els.kwhInput, els.payHoursInput].forEach(input => {
-      input.addEventListener('keydown', event => {
-        if (event.key === 'Enter') {
-          event.preventDefault();
+      input.addEventListener('keydown', dismissPayKeyboard, true);
+      input.addEventListener('keyup', dismissPayKeyboard, true);
+      input.addEventListener('focus', () => {
+        if (Date.now() < payEnterDismissUntil) {
           input.blur();
         }
       });
     });
 
     /* =========================
+       KEYBOARD / BOTTOM BAR
+       ========================= */
+
+    function syncKeyboardState() {
+      const vv = window.visualViewport;
+      const active = document.activeElement;
+      const isInput = active && active.tagName === 'INPUT';
+      const viewportReduced = vv
+        ? (window.innerHeight - vv.height) > 120
+        : false;
+      document.body.classList.toggle('keyboard-open', Boolean(isInput && viewportReduced));
+    }
+
+    document.addEventListener('focusin', () => window.setTimeout(syncKeyboardState, 30));
+    document.addEventListener('focusout', () => window.setTimeout(syncKeyboardState, 80));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', syncKeyboardState, { passive: true });
+      window.visualViewport.addEventListener('scroll', syncKeyboardState, { passive: true });
+    }
+
+    /* =========================
        INITIAL STATE
        ========================= */
+
+    document.body.classList.add('home-active');
 
     try {
       const lastName = localStorage.getItem(LAST_NAME_KEY) || localStorage.getItem('lastName') || '';
