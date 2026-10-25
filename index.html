@@ -981,6 +981,86 @@
       letter-spacing: 0.04em;
     }
 
+
+    .control-center-screen {
+      margin-bottom: var(--home-gap);
+      padding: 0.76rem;
+      border-radius: 0.78rem;
+      background: #2f2f2f;
+      text-align: left;
+    }
+
+    .control-center-section-title {
+      margin: 0 0 0.58rem;
+      color: #ffffff;
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    .control-center-screen-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--home-gap);
+      margin-bottom: var(--home-gap);
+    }
+
+    .control-center-screen-button {
+      min-height: 2.75rem;
+      border: 0;
+      border-radius: 0.62rem;
+      font-size: 0.86rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .control-center-screen-button.active {
+      outline: 0.15rem solid #ffffff;
+      outline-offset: 0.08rem;
+    }
+
+    .screen-info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.55rem;
+    }
+
+    .screen-info-card {
+      padding: 0.62rem 0.68rem;
+      border-radius: 0.62rem;
+      background: #202020;
+      color: #f2f2f2;
+    }
+
+    .screen-info-name {
+      margin-bottom: 0.34rem;
+      font-size: 0.78rem;
+      font-weight: 900;
+      letter-spacing: 0.07em;
+      color: #ffffff;
+    }
+
+    .screen-info-lines {
+      display: grid;
+      gap: 0.18rem;
+      font-size: 0.72rem;
+      line-height: 1.28;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .screen-info-lines .muted {
+      color: #bdbdbd;
+      font-weight: 700;
+    }
+
+    .screen-info-pending {
+      color: #aaaaaa;
+      font-style: italic;
+      font-weight: 700;
+    }
+
     .control-center-mode {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -1179,7 +1259,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.34">V1.34</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.35">V1.35</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1341,6 +1421,32 @@
   <div id="controlCenter" class="control-center-overlay" aria-hidden="true">
     <div class="control-center-box" role="dialog" aria-modal="true" aria-labelledby="controlCenterTitle">
       <div id="controlCenterTitle" class="control-center-title">CONTROL CENTER</div>
+
+      <div class="control-center-screen">
+        <div class="control-center-section-title">SCREEN INFO</div>
+
+        <div class="control-center-screen-actions">
+          <button id="ccScreenStart" class="control-center-screen-button" type="button">START</button>
+          <button id="ccScreenCopy" class="control-center-screen-button" type="button">COPY</button>
+        </div>
+
+        <div class="screen-info-grid">
+          <div class="screen-info-card">
+            <div class="screen-info-name">SESSIONS</div>
+            <div id="ccSessionsInfo" class="screen-info-lines">
+              <div class="screen-info-pending">Press START to capture</div>
+            </div>
+          </div>
+
+          <div class="screen-info-card">
+            <div class="screen-info-name">PAY</div>
+            <div id="ccPayInfo" class="screen-info-lines">
+              <div class="screen-info-pending">Press START, then visit PAY</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="control-center-mode">
         <button id="ccMaster" class="action-button" type="button">MASTER</button>
         <button id="ccRegular" class="action-button" type="button">REGULAR</button>
@@ -1417,6 +1523,10 @@
       ccMaster: document.getElementById('ccMaster'),
       ccRegular: document.getElementById('ccRegular'),
       ccClose: document.getElementById('ccClose'),
+      ccScreenStart: document.getElementById('ccScreenStart'),
+      ccScreenCopy: document.getElementById('ccScreenCopy'),
+      ccSessionsInfo: document.getElementById('ccSessionsInfo'),
+      ccPayInfo: document.getElementById('ccPayInfo'),
       form: document.getElementById('chargingForm'),
       name: document.getElementById('name'),
       hours: document.getElementById('hours'),
@@ -1462,9 +1572,12 @@
       const dpr = Math.max(0.1, Number(window.devicePixelRatio) || 1);
       const adjDPR = adjustedDpr(dpr);
       const effectiveHeight = cssHeight * adjDPR;
+      const effectiveWidth = Math.min(1000, cssWidth) * adjDPR;
+      const heightMultiplier = effectiveHeight / EFFECTIVE_HEIGHT_BASELINE;
+      const widthMultiplier = Math.min(1, cssWidth / 1000);
       const multiplier = Math.max(
         MIN_GLOBAL_MULTIPLIER,
-        effectiveHeight / EFFECTIVE_HEIGHT_BASELINE
+        heightMultiplier
       );
 
       return {
@@ -1473,7 +1586,9 @@
         dpr,
         adjDPR,
         effectiveHeight,
-        effectiveWidth: Math.min(900, cssWidth) * adjDPR,
+        effectiveWidth,
+        heightMultiplier,
+        widthMultiplier,
         multiplier
       };
     }
@@ -1493,6 +1608,7 @@
       viewportRaf = requestAnimationFrame(() => {
         viewportRaf = 0;
         applyViewportScale();
+        requestAnimationFrame(captureCurrentViewMetrics);
       });
     }
 
@@ -1578,6 +1694,7 @@
 
     function openControlCenter() {
       paintControlCenterMode();
+      renderScreenInfo();
       els.controlCenter.classList.add('open');
       els.controlCenter.setAttribute('aria-hidden', 'false');
     }
@@ -1645,6 +1762,142 @@
       els.controlCenter.setAttribute('aria-hidden', 'true');
     }
 
+
+    let screenCaptureRunning = false;
+    const screenSnapshots = {
+      home: null,
+      pay: null
+    };
+
+    function getVisualViewportMetrics() {
+      const vv = window.visualViewport;
+      return {
+        width: vv ? vv.width : window.innerWidth,
+        height: vv ? vv.height : window.innerHeight,
+        scale: vv ? vv.scale : 1
+      };
+    }
+
+    function getRenderedViewMetrics(viewName) {
+      const target = viewName === 'pay' ? els.payView : els.homeView;
+      if (!target) return { width: 0, height: 0, pageHeight: 0 };
+
+      const rect = target.getBoundingClientRect();
+      return {
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+        pageHeight: Math.round(Math.max(
+          document.documentElement.scrollHeight || 0,
+          document.body.scrollHeight || 0
+        ))
+      };
+    }
+
+    function makeScreenSnapshot(viewName) {
+      const m = getViewportMetrics();
+      const vv = getVisualViewportMetrics();
+      const rendered = getRenderedViewMetrics(viewName);
+
+      return {
+        viewName,
+        capturedAt: new Date(),
+        cssWidth: Math.round(m.cssWidth),
+        cssHeight: Math.round(m.cssHeight),
+        visualWidth: Math.round(vv.width),
+        visualHeight: Math.round(vv.height),
+        visualScale: Number(vv.scale || 1),
+        dpr: m.dpr,
+        adjDPR: m.adjDPR,
+        effectiveWidth: Math.round(m.effectiveWidth),
+        effectiveHeight: Math.round(m.effectiveHeight),
+        widthMultiplier: m.widthMultiplier,
+        heightMultiplier: m.heightMultiplier,
+        appliedMultiplier: m.multiplier,
+        renderedWidth: rendered.width,
+        renderedHeight: rendered.height,
+        pageHeight: rendered.pageHeight
+      };
+    }
+
+    function formatSnapshot(snapshot) {
+      if (!snapshot) {
+        return '<div class="screen-info-pending">Not captured yet</div>';
+      }
+
+      const time = snapshot.capturedAt.toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      return `
+        <div>VIEW ${snapshot.cssWidth}×${snapshot.cssHeight} CSS px</div>
+        <div>VISUAL ${snapshot.visualWidth}×${snapshot.visualHeight} • SCALE ${snapshot.visualScale.toFixed(2)}</div>
+        <div>DPR ${snapshot.dpr.toFixed(2)} • ADJ ${snapshot.adjDPR.toFixed(2)}</div>
+        <div>EFF W ${snapshot.effectiveWidth} • EFF H ${snapshot.effectiveHeight}</div>
+        <div>W MULT ${snapshot.widthMultiplier.toFixed(3)} • H MULT ${snapshot.heightMultiplier.toFixed(3)}</div>
+        <div>APPLIED ${snapshot.appliedMultiplier.toFixed(3)}</div>
+        <div>CONTENT ${snapshot.renderedWidth}×${snapshot.renderedHeight} • PAGE H ${snapshot.pageHeight}</div>
+        <div class="muted">Captured ${time}</div>
+      `;
+    }
+
+    function renderScreenInfo() {
+      els.ccSessionsInfo.innerHTML = formatSnapshot(screenSnapshots.home);
+      els.ccPayInfo.innerHTML = formatSnapshot(screenSnapshots.pay);
+      els.ccScreenStart.classList.toggle('active', screenCaptureRunning);
+      els.ccScreenStart.textContent = screenCaptureRunning ? 'RUNNING' : 'START';
+    }
+
+    function captureCurrentViewMetrics() {
+      if (!screenCaptureRunning) return;
+      const key = currentView === 'pay' ? 'pay' : 'home';
+      screenSnapshots[key] = makeScreenSnapshot(key);
+      renderScreenInfo();
+    }
+
+    function startScreenCapture() {
+      screenCaptureRunning = true;
+      captureCurrentViewMetrics();
+      renderScreenInfo();
+    }
+
+    function screenInfoText() {
+      function block(label, s) {
+        if (!s) return `${label}\\nNOT CAPTURED`;
+        return [
+          label,
+          `VIEW ${s.cssWidth}x${s.cssHeight} CSS px`,
+          `VISUAL ${s.visualWidth}x${s.visualHeight} SCALE ${s.visualScale.toFixed(2)}`,
+          `DPR ${s.dpr.toFixed(2)} ADJ ${s.adjDPR.toFixed(2)}`,
+          `EFF W ${s.effectiveWidth} EFF H ${s.effectiveHeight}`,
+          `W MULT ${s.widthMultiplier.toFixed(3)} H MULT ${s.heightMultiplier.toFixed(3)}`,
+          `APPLIED ${s.appliedMultiplier.toFixed(3)}`,
+          `CONTENT ${s.renderedWidth}x${s.renderedHeight} PAGE H ${s.pageHeight}`
+        ].join('\\n');
+      }
+
+      return `${block('SESSIONS', screenSnapshots.home)}\\n\\n${block('PAY', screenSnapshots.pay)}`;
+    }
+
+    async function copyScreenInfo() {
+      const value = screenInfoText();
+      try {
+        await navigator.clipboard.writeText(value);
+        const previous = els.ccScreenCopy.textContent;
+        els.ccScreenCopy.textContent = 'COPIED';
+        window.setTimeout(() => {
+          els.ccScreenCopy.textContent = previous;
+        }, 1200);
+      } catch (_) {
+        const previous = els.ccScreenCopy.textContent;
+        els.ccScreenCopy.textContent = 'COPY FAILED';
+        window.setTimeout(() => {
+          els.ccScreenCopy.textContent = previous;
+        }, 1400);
+      }
+    }
+
     function applyAuthorizationUI() {
       /* USER controls are always interactive in the frontend. Cloudflare is the
          authority for mutations; MASTER-only DELETE ALL remains role-gated. */
@@ -1659,7 +1912,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.34';
+      els.revisionBox.textContent = 'V1.35';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2285,6 +2538,7 @@
         }
 
         requestAnimationFrame(() => {
+          captureCurrentViewMetrics();
           els.curtain.classList.remove('covered');
         });
       };
@@ -2308,6 +2562,9 @@
       if (!isControlCenterUnlocked()) return;
       switchControlMode('user');
     });
+
+    els.ccScreenStart.addEventListener('click', startScreenCapture);
+    els.ccScreenCopy.addEventListener('click', copyScreenInfo);
 
     els.ccClose.addEventListener('click', closeControlCenter);
     els.controlCenter.addEventListener('click', event => {
