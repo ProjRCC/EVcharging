@@ -40,6 +40,7 @@
       --red-press: #862727;
       --green: #67bd4b;
       --active-bg: #31472a;
+      --refresh-inactive: #9b9b9b;
       --shadow: 0 0.23rem 0.62rem rgba(0, 0, 0, 0.28);
       --shadow-soft: 0 0.16rem 0.42rem rgba(0, 0, 0, 0.22);
     }
@@ -289,7 +290,7 @@
       inset: 0;
       z-index: -1;
       width: var(--refresh-progress, 0%);
-      background: var(--refresh-fill, var(--green));
+      background: var(--refresh-fill, var(--refresh-inactive));
       transition: width 0.10s linear;
       border-radius: inherit;
     }
@@ -1091,7 +1092,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.20">V1.20</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.21">V1.21</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1452,7 +1453,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.20';
+      els.revisionBox.textContent = 'V1.21';
       renderTable();
     }
 
@@ -1976,6 +1977,11 @@
     function renderTable() {
       els.tbody.innerHTML = '';
       const nowMs = Date.now();
+      const hasActiveSessionNow = currentData.some(entry => {
+        const endMs = Date.parse(entry.End);
+        return Number.isFinite(endMs) && endMs > nowMs;
+      });
+      els.status.style.setProperty('--refresh-fill', hasActiveSessionNow ? 'var(--green)' : 'var(--refresh-inactive)');
       const authorized = true;
 
       currentData.forEach(entry => {
@@ -2257,7 +2263,7 @@
         return Number.isFinite(endMs) && endMs > nowMs;
       });
       els.status.style.setProperty('--refresh-progress', `${pct}%`);
-      els.status.style.setProperty('--refresh-fill', hasActiveSession ? 'var(--green)' : 'var(--gray-2)');
+      els.status.style.setProperty('--refresh-fill', hasActiveSession ? 'var(--green)' : 'var(--refresh-inactive)');
       autoRefreshRaf = requestAnimationFrame(paintAutoRefreshProgress);
     }
 
