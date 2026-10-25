@@ -47,7 +47,7 @@
       --home-gap: 0.42rem;
       --footer-button-height: 3.30rem;
       --footer-bottom: 0.65rem;
-      --content-max: 1000px;
+      --content-max: 550px;
       --page-pad: 0.75rem;
     }
 
@@ -550,7 +550,7 @@
 
     /* PORTRAIT-ONLY — same visual treatment as SimpleScramble. */
     .rotate-portrait-overlay {
-      display: none !important;
+      display: none;
       position: fixed;
       inset: 0;
       z-index: 10000;
@@ -563,6 +563,10 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
+    }
+
+    .rotate-portrait-overlay.show {
+      display: flex;
     }
 
     .rotate-portrait-box {
@@ -1253,7 +1257,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.38">V1.38</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.43">V1.43</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1546,7 +1550,7 @@
       const dpr = Math.max(0.1, Number(window.devicePixelRatio) || 1);
       const adjDPR = adjustedDpr(dpr);
       const effectiveHeight = cssHeight * adjDPR;
-      const effectiveWidth = Math.min(1000, cssWidth) * adjDPR;
+      const effectiveWidth = Math.min(550, cssWidth);
       const heightMultiplier = effectiveHeight / EFFECTIVE_HEIGHT_BASELINE;
       const widthMultiplier = Math.min(1, cssWidth / 1000);
       const multiplier = Math.max(
@@ -1565,6 +1569,18 @@
         widthMultiplier,
         multiplier
       };
+    }
+
+    function updateRotateOverlay() {
+      const width = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+      const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      const aspect = height > 0 ? width / height : 0;
+      const shouldRotate = aspect > 1.80;
+      const overlay = document.querySelector('.rotate-portrait-overlay');
+      if (overlay) {
+        overlay.classList.toggle('show', shouldRotate);
+        overlay.setAttribute('aria-hidden', shouldRotate ? 'false' : 'true');
+      }
     }
 
     function applyViewportScale() {
@@ -1587,6 +1603,7 @@
 
     applyViewportScale();
     window.addEventListener('resize', scheduleViewportScale, { passive: true });
+    window.addEventListener('resize', updateRotateOverlay, { passive: true });
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
         if (els.controlCenter.classList.contains('open')) {
@@ -1850,7 +1867,7 @@
         <div>VISUAL ${Math.round(vv.width)} × ${Math.round(vv.height)} • SCALE ${Number(vv.scale || 1).toFixed(2)}</div>
         <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ ${Number(m.adjDPR || 1).toFixed(2)}</div>
         <div>EFFECTIVE ${Math.round(m.effectiveWidth)} × ${Math.round(m.effectiveHeight)}</div>
-        <div>W MULT ${Number(m.widthMultiplier || 0).toFixed(3)} • H MULT ${Number(m.heightMultiplier || 0).toFixed(3)}</div>
+        <div>H MULT ${Number(m.heightMultiplier || 0).toFixed(3)}</div>
         <div>APPLIED ${Number(m.multiplier || 0).toFixed(3)}</div>
         <div>ASPECT ${aspect.toFixed(3)} • ${orientation}</div>
         <div>CURRENT VIEW ${activeView}</div>
@@ -1871,7 +1888,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.38';
+      els.revisionBox.textContent = 'V1.43';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
