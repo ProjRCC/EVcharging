@@ -339,7 +339,7 @@
       min-height: 0;
       width: 100%;
       margin: 0.22rem 0 0.18rem;
-      padding: 0 0 0.18rem;
+      padding: 0 0 7.2rem;
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior-x: contain;
@@ -468,21 +468,24 @@
       right: 0;
       bottom: 0;
       z-index: 48;
-      height: calc(7.9rem + env(safe-area-inset-bottom));
+      height: calc(12.5rem + env(safe-area-inset-bottom));
       pointer-events: none;
       background: linear-gradient(
         to bottom,
         rgba(68, 68, 68, 0) 0%,
-        rgba(68, 68, 68, 0.28) 16%,
-        rgba(68, 68, 68, 0.72) 34%,
-        rgba(68, 68, 68, 0.96) 52%,
-        var(--gray-7) 66%
+        rgba(68, 68, 68, 0.10) 14%,
+        rgba(68, 68, 68, 0.30) 28%,
+        rgba(68, 68, 68, 0.62) 42%,
+        rgba(68, 68, 68, 0.88) 56%,
+        var(--gray-7) 68%,
+        var(--gray-7) 100%
       );
-      box-shadow: 0 -0.55rem 1.15rem rgba(0, 0, 0, 0.24);
+      box-shadow: none;
     }
 
     .refresh-dock {
       position: fixed;
+      pointer-events: none;
       left: 50%;
       bottom: calc(4.95rem + env(safe-area-inset-bottom));
       transform: translateX(-50%);
@@ -495,6 +498,7 @@
       width: 100%;
       max-width: none;
       margin: 0;
+      pointer-events: none;
     }
 
     .bottom-actions {
@@ -1127,7 +1131,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.23">V1.23</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.24">V1.24</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1493,7 +1497,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.23';
+      els.revisionBox.textContent = 'V1.24';
       renderTable();
     }
 
