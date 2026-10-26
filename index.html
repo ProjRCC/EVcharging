@@ -1300,7 +1300,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.72">V1.72</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.73">V1.73</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1760,6 +1760,7 @@
     let viewportSettleTimers = [];
     let startupCurtainActive = true;
     let startupCurtainReleaseTimer = 0;
+    let pageHasBeenVisible = false;
 
     function scheduleViewportScale() {
       if (viewportRaf) cancelAnimationFrame(viewportRaf);
@@ -1767,6 +1768,17 @@
         viewportRaf = 0;
         applyViewportScale();
       });
+    }
+
+    function coverForViewportSettle() {
+      startupCurtainActive = true;
+      if (startupCurtainReleaseTimer) {
+        clearTimeout(startupCurtainReleaseTimer);
+        startupCurtainReleaseTimer = 0;
+      }
+
+      els.curtain.setAttribute('aria-hidden', 'false');
+      els.curtain.classList.add('covered');
     }
 
     function releaseStartupCurtain() {
@@ -1798,6 +1810,12 @@
       }
     }
 
+    function restoreLivePage() {
+      coverForViewportSettle();
+      settleViewportScale();
+      requestAnimationFrame(updateRotateOverlay);
+    }
+
     settleViewportScale();
     updateRotateOverlay();
     window.addEventListener('resize', settleViewportScale, { passive: true });
@@ -1819,6 +1837,20 @@
     window.addEventListener('orientationchange', () => {
       settleViewportScale();
       requestAnimationFrame(updateRotateOverlay);
+    }, { passive: true });
+
+    window.addEventListener('pageshow', event => {
+      if (pageHasBeenVisible || event.persisted) {
+        restoreLivePage();
+      }
+      pageHasBeenVisible = true;
+    }, { passive: true });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        if (pageHasBeenVisible) restoreLivePage();
+        pageHasBeenVisible = true;
+      }
     }, { passive: true });
 
     /* =========================
@@ -2118,7 +2150,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.72';
+      els.revisionBox.textContent = 'V1.73';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
