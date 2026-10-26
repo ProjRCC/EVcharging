@@ -504,8 +504,7 @@
       background: linear-gradient(
         to bottom,
         rgba(85, 85, 85, 0) 0,
-        rgba(85, 85, 85, 0) var(--home-gap),
-        var(--gray-6) calc(var(--home-gap) + var(--footer-fade-height)),
+        var(--gray-6) var(--footer-fade-height),
         var(--gray-6) 100%
       );
       box-shadow: none;
@@ -554,7 +553,7 @@
 
 
     .bottom-actions .link-button {
-      background: var(--red);
+      background: var(--gray-9);
       text-align: center;
       line-height: 1.02;
       white-space: normal;
@@ -1308,7 +1307,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.59">V1.59</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.60">V1.60</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1709,7 +1708,7 @@
           window.visualViewport ? window.visualViewport.height : window.innerHeight
         );
         const submitBottom = submitButton.getBoundingClientRect().bottom;
-        return submitBottom <= viewportHeight * 0.33;
+        return submitBottom <= viewportHeight * 0.30;
       });
     }
 
@@ -2076,7 +2075,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.59';
+      els.revisionBox.textContent = 'V1.60';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
