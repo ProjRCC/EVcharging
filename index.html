@@ -1289,7 +1289,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.55">V1.55</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.56">V1.56</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1682,20 +1682,15 @@
           return contentBottom + protectedGap <= dockTop;
         }
 
-        const sessionShell = document.querySelector('#homeView .session-shell');
-        const refreshDock = document.querySelector('#homeView .refresh-dock');
-        if (!sessionShell || !refreshDock) return true;
+        const submitButton = els.submit;
+        if (!submitButton) return true;
 
-        const availableSessionHeight =
-          refreshDock.getBoundingClientRect().top -
-          sessionShell.getBoundingClientRect().top;
-
-        const firstRow = sessionShell.querySelector('tbody tr');
-        const minimumSessionHeight = firstRow
-          ? Math.max(firstRow.getBoundingClientRect().height + protectedGap, rootFont * 4.6)
-          : rootFont * 4.6;
-
-        return availableSessionHeight >= minimumSessionHeight;
+        const viewportHeight = Math.max(
+          1,
+          window.visualViewport ? window.visualViewport.height : window.innerHeight
+        );
+        const submitBottom = submitButton.getBoundingClientRect().bottom;
+        return submitBottom <= viewportHeight * 0.30;
       });
     }
 
@@ -1728,18 +1723,6 @@
 
     function calculateSharedFitMultiplier(metrics) {
       const base = Math.max(1, metrics.heightMultiplier);
-
-      const isS25BaselineDpr = Math.abs(metrics.dpr - 2.81) < 0.02;
-
-      if (isS25BaselineDpr) {
-        lastFitMetrics = {
-          sessionSafe: base,
-          paySafe: base,
-          applied: base
-        };
-        return base;
-      }
-
       const sessionSafe = findSafeMultiplier('home', base);
       const paySafe = findSafeMultiplier('pay', base);
       const applied = Math.max(base, Math.min(sessionSafe, paySafe));
@@ -2029,19 +2012,32 @@
 
     function renderScreenInfo() {
       const m = getViewportMetrics();
-      const vv = getVisualViewportMetrics();
       const aspect = m.cssHeight ? (m.cssWidth / m.cssHeight) : 0;
       const orientation = m.cssWidth >= m.cssHeight ? 'LANDSCAPE' : 'PORTRAIT';
       const activeView = currentView === 'pay' ? 'PAY' : 'SESSIONS';
 
+      const base = Math.max(1, Number(m.heightMultiplier || 1));
+      const applied = Math.max(base, Number(lastFitMetrics.applied || base));
+      const safeMultiplier = applied / base;
+
+      const shell = document.querySelector('.app-shell');
+      let usedWidth = Math.min(550, m.cssWidth);
+      if (shell) {
+        const shellRect = shell.getBoundingClientRect();
+        const shellStyle = getComputedStyle(shell);
+        const padLeft = parseFloat(shellStyle.paddingLeft) || 0;
+        const padRight = parseFloat(shellStyle.paddingRight) || 0;
+        usedWidth = Math.max(0, shellRect.width - padLeft - padRight);
+      }
+
       els.ccCompactInfo.innerHTML = `
-        <div>VIEW ${Math.round(m.cssWidth)} × ${Math.round(m.cssHeight)} CSS px</div>
-        <div>VISUAL ${Math.round(vv.width)} × ${Math.round(vv.height)} • SCALE ${Number(vv.scale || 1).toFixed(2)}</div>
-        <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ ${Number(m.adjDPR || 1).toFixed(2)}</div>
-        <div>EFFECTIVE ${Math.round(m.effectiveWidth)} × ${Math.round(m.effectiveHeight)}</div>
-        <div>H MULT ${Number(m.heightMultiplier || 0).toFixed(3)}</div>
-        <div>SAFE SESS ${Number(lastFitMetrics.sessionSafe || 1).toFixed(3)} • PAY ${Number(lastFitMetrics.paySafe || 1).toFixed(3)}</div>
-        <div>APPLIED ${Number(lastFitMetrics.applied || 1).toFixed(3)}</div>
+        <div>VIEWPORT ${Math.round(m.cssWidth)} × ${Math.round(m.cssHeight)} CSS px</div>
+        <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ DPR ${Number(m.adjDPR || 1).toFixed(2)}</div>
+        <div>H MULT ${base.toFixed(3)}</div>
+        <div>SAFE MULT ${safeMultiplier.toFixed(3)}</div>
+        <div>APPLIED MULT ${applied.toFixed(3)}</div>
+        <div>CSS MAX WIDTH 550 px</div>
+        <div>USED WIDTH ${Math.round(usedWidth)} px</div>
         <div>ASPECT ${aspect.toFixed(3)} • ${orientation}</div>
         <div>CURRENT VIEW ${activeView}</div>
       `;
@@ -2061,7 +2057,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.55';
+      els.revisionBox.textContent = 'V1.56';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
