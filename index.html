@@ -1300,7 +1300,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.66">V1.66</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.67">V1.67</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2078,7 +2078,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.66';
+      els.revisionBox.textContent = 'V1.67';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2802,10 +2802,16 @@
     }
 
     [els.kwhInput, els.payHoursInput].forEach(input => {
-      input.addEventListener('pointerdown', () => {
-        if (input.classList.contains('preloaded')) clearPayPreload(input);
-      }, { passive: true });
-      input.addEventListener('focus', () => preparePayFieldForEditing(input));
+      const clearForFreshEntry = () => {
+        if (input.value) {
+          input.value = '';
+          input.classList.remove('preloaded');
+          updatePayCalculators();
+        }
+      };
+
+      input.addEventListener('pointerdown', clearForFreshEntry, { passive: true });
+      input.addEventListener('focus', clearForFreshEntry);
       input.addEventListener('input', () => {
         input.classList.remove('preloaded');
         updatePayCalculators();
