@@ -48,7 +48,6 @@
       --footer-button-height: 3.30rem;
       --footer-bottom: 0.65rem;
       --refresh-height: 1.55rem;
-      --footer-fade-height: 28px;
       --content-max: 550px;
       --page-pad: 0.75rem;
     }
@@ -359,7 +358,6 @@
         + var(--home-gap)
         + var(--refresh-height)
         + var(--home-gap)
-        + var(--footer-fade-height)
         + env(safe-area-inset-bottom)
       );
       overflow-y: auto;
@@ -484,31 +482,6 @@
     }
 
 
-
-    .footer-fade {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 48;
-      height: calc(
-        var(--footer-bottom)
-        + var(--footer-button-height)
-        + var(--home-gap)
-        + var(--refresh-height)
-        + var(--home-gap)
-        + var(--footer-fade-height)
-        + env(safe-area-inset-bottom)
-      );
-      pointer-events: none;
-      background: linear-gradient(
-        to bottom,
-        rgba(85, 85, 85, 0) 0,
-        var(--gray-6) var(--footer-fade-height),
-        var(--gray-6) 100%
-      );
-      box-shadow: none;
-    }
 
     .refresh-dock {
       position: fixed;
@@ -1307,7 +1280,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.60">V1.60</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.61">V1.61</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1358,8 +1331,6 @@
           </button>
         </div>
       </div>
-
-      <div class="footer-fade" aria-hidden="true"></div>
 
       <div class="refresh-dock">
         <div id="statusIndicator" role="status" aria-live="polite">
@@ -2075,7 +2046,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.60';
+      els.revisionBox.textContent = 'V1.61';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
