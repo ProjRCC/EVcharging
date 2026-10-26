@@ -1308,7 +1308,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.57">V1.57</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.59">V1.59</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1709,7 +1709,7 @@
           window.visualViewport ? window.visualViewport.height : window.innerHeight
         );
         const submitBottom = submitButton.getBoundingClientRect().bottom;
-        return submitBottom <= viewportHeight * 0.25;
+        return submitBottom <= viewportHeight * 0.33;
       });
     }
 
@@ -2076,7 +2076,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.57';
+      els.revisionBox.textContent = 'V1.59';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
