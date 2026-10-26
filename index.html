@@ -351,18 +351,15 @@
       flex: 1 1 auto;
       min-height: 0;
       width: 100%;
-      margin:
-        var(--home-gap)
-        0
-        calc(
-          var(--footer-bottom)
-          + var(--footer-button-height)
-          + var(--home-gap)
-          + var(--refresh-height)
-          + var(--home-gap)
-          + env(safe-area-inset-bottom)
-        );
-      padding: 0;
+      margin: var(--home-gap) 0 0;
+      padding: 0 0 calc(
+        var(--footer-bottom)
+        + var(--footer-button-height)
+        + var(--home-gap)
+        + var(--refresh-height)
+        + var(--home-gap)
+        + env(safe-area-inset-bottom)
+      );
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior-x: contain;
@@ -375,7 +372,7 @@
       width: 100%;
       max-width: var(--content-max);
       overflow-x: hidden;
-      margin: 0 auto var(--home-gap);
+      margin: 0 auto 0.75rem;
       border-radius: 0.58rem;
     }
 
@@ -486,6 +483,23 @@
 
 
 
+    .progress-gap-cover {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(
+        var(--footer-bottom)
+        + var(--footer-button-height)
+        + var(--home-gap)
+        + var(--refresh-height)
+        + env(safe-area-inset-bottom)
+      );
+      height: var(--home-gap);
+      z-index: 48;
+      background: var(--gray-6);
+      pointer-events: none;
+    }
+
     .refresh-dock {
       position: fixed;
       pointer-events: none;
@@ -514,7 +528,7 @@
       margin: 0;
       display: grid;
       grid-template-columns: 3fr 7fr;
-      gap: var(--home-gap);
+      gap: 0.72rem;
       align-items: stretch;
     }
 
@@ -1283,7 +1297,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.62">V1.62</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.63">V1.63</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1334,6 +1348,8 @@
           </button>
         </div>
       </div>
+
+      <div class="progress-gap-cover" aria-hidden="true"></div>
 
       <div class="refresh-dock">
         <div id="statusIndicator" role="status" aria-live="polite">
@@ -2049,7 +2065,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.62';
+      els.revisionBox.textContent = 'V1.63';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
