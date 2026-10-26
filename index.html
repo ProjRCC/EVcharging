@@ -1192,7 +1192,7 @@
       background: var(--red);
     }
 
-    /* GRAY 7 VIEW CURTAIN */
+    /* GRAY 6 VIEW CURTAIN */
 
     #viewCurtain {
       position: fixed;
@@ -1297,10 +1297,10 @@
     <div class="rotate-portrait-box">ROTATE TO PORTRAIT</div>
   </div>
 
-  <div id="viewCurtain" aria-hidden="true"></div>
+  <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.70">V1.70</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.72">V1.72</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1757,6 +1757,10 @@
     }
 
     let viewportRaf = 0;
+    let viewportSettleTimers = [];
+    let startupCurtainActive = true;
+    let startupCurtainReleaseTimer = 0;
+
     function scheduleViewportScale() {
       if (viewportRaf) cancelAnimationFrame(viewportRaf);
       viewportRaf = requestAnimationFrame(() => {
@@ -1765,12 +1769,43 @@
       });
     }
 
-    applyViewportScale();
+    function releaseStartupCurtain() {
+      if (!startupCurtainActive) return;
+      startupCurtainActive = false;
+      startupCurtainReleaseTimer = 0;
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          els.curtain.classList.remove('covered');
+          window.setTimeout(() => els.curtain.setAttribute('aria-hidden', 'true'), 520);
+        });
+      });
+    }
+
+    function settleViewportScale() {
+      viewportSettleTimers.forEach(timer => clearTimeout(timer));
+      viewportSettleTimers = [];
+
+      scheduleViewportScale();
+
+      [80, 220, 500, 900].forEach(delay => {
+        viewportSettleTimers.push(window.setTimeout(scheduleViewportScale, delay));
+      });
+
+      if (startupCurtainActive) {
+        if (startupCurtainReleaseTimer) clearTimeout(startupCurtainReleaseTimer);
+        startupCurtainReleaseTimer = window.setTimeout(releaseStartupCurtain, 980);
+      }
+    }
+
+    settleViewportScale();
     updateRotateOverlay();
-    window.addEventListener('resize', scheduleViewportScale, { passive: true });
+    window.addEventListener('resize', settleViewportScale, { passive: true });
     window.addEventListener('resize', updateRotateOverlay, { passive: true });
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', () => {
+        settleViewportScale();
+
         if (els.controlCenter.classList.contains('open')) {
           requestAnimationFrame(renderScreenInfo);
         }
@@ -1782,7 +1817,7 @@
       }, { passive: true });
     }
     window.addEventListener('orientationchange', () => {
-      scheduleViewportScale();
+      settleViewportScale();
       requestAnimationFrame(updateRotateOverlay);
     }, { passive: true });
 
@@ -2083,7 +2118,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.70';
+      els.revisionBox.textContent = 'V1.72';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2992,6 +3027,7 @@
 
     applyAuthorizationUI();
     restoreCachedData();
+    settleViewportScale();
 
     const startupToken = currentToken;
     loadData({ tokenCandidate: startupToken, startup: true });
