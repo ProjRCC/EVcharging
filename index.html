@@ -1300,7 +1300,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.67">V1.67</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.68">V1.68</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1774,6 +1774,11 @@
         if (els.controlCenter.classList.contains('open')) {
           requestAnimationFrame(renderScreenInfo);
         }
+
+        const active = document.activeElement;
+        if (active === els.kwhInput || active === els.payHoursInput) {
+          requestAnimationFrame(() => revealPayAmount(active));
+        }
       }, { passive: true });
     }
     window.addEventListener('orientationchange', () => {
@@ -2078,7 +2083,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.67';
+      els.revisionBox.textContent = 'V1.68';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2801,6 +2806,23 @@
       updatePayCalculators();
     }
 
+    function revealPayAmount(input) {
+      const card = input.closest('.calculator-card');
+      if (!card) return;
+
+      const centerCard = () => {
+        card.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+      };
+
+      requestAnimationFrame(centerCard);
+      window.setTimeout(centerCard, 120);
+      window.setTimeout(centerCard, 300);
+    }
+
     [els.kwhInput, els.payHoursInput].forEach(input => {
       const clearForFreshEntry = () => {
         if (input.value) {
@@ -2811,7 +2833,10 @@
       };
 
       input.addEventListener('pointerdown', clearForFreshEntry, { passive: true });
-      input.addEventListener('focus', clearForFreshEntry);
+      input.addEventListener('focus', () => {
+        clearForFreshEntry();
+        revealPayAmount(input);
+      });
       input.addEventListener('input', () => {
         input.classList.remove('preloaded');
         updatePayCalculators();
