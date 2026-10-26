@@ -157,7 +157,11 @@
     }
 
     h1 {
-      margin: 0.5rem 2.6rem var(--home-gap);
+      min-height: 2.25rem;
+      margin: 0.25rem 2.6rem var(--home-gap);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: #ffffff;
       font-size: 1.78rem;
       font-weight: 900;
@@ -211,6 +215,7 @@
 
     .field::placeholder {
       color: #666666;
+      font-style: italic;
     }
 
     .field:focus,
@@ -1091,18 +1096,33 @@
     .control-center-mode .action-button {
       width: 100%;
       min-height: 3rem;
+      background: var(--gray-7);
     }
 
     .control-center-mode .selected-mode {
-      outline: 0.16rem solid #fff;
-      outline-offset: 0.08rem;
+      background: var(--blue);
+      outline: none;
     }
 
     .control-center-close {
       width: 100%;
       margin-top: var(--home-gap);
       min-height: 2.8rem;
-      background: #555;
+      background: var(--blue);
+    }
+
+
+    /* Visual haptic: every blue interactive control flashes black while pressed. */
+    .submit-button:active,
+    #payButton:not(.master-delete-mode):active,
+    .home-button:active,
+    .hours-picker-done:active,
+    .hours-picker-step:active,
+    .mini-button.end:active,
+    .control-center-mode .selected-mode:active,
+    .control-center-close:active,
+    .custom-modal-button:not(.custom-modal-cancel):not(.custom-modal-delete):active {
+      background: #000000 !important;
     }
 
     /* MODAL */
@@ -1280,7 +1300,7 @@
   <div id="viewCurtain" aria-hidden="true"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.64">V1.64</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.66">V1.66</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1291,7 +1311,7 @@
           id="name"
           class="field"
           autocomplete="name"
-          placeholder="Name - Vehicle Make">
+          placeholder="Enter Name - Vehicle Make">
 
         <input
           id="hours"
@@ -1299,7 +1319,7 @@
           type="text"
           inputmode="none"
           readonly
-          placeholder="Hours"
+          placeholder="Enter Hours"
           aria-haspopup="dialog"
           aria-controls="hoursPicker">
 
@@ -1356,12 +1376,12 @@
       <h1>PAYMENT</h1>
 
       <div class="pay-warning pay-honor-box">
-        <div class="pay-intro">Charging/Payment based on honor system.<br>Pay via Venmo or PayPal. Calculators are optional.</div>
+        <div class="pay-intro">Charging/Payment based on honor system.<br>Pay via Venmo or PayPal.</div>
         <strong>FAILURE TO PAY WILL RESULT IN SUSPENSION OF CHARGER ACCESS.</strong>
         Lock codes may be changed to enforce suspension.
       </div>
 
-      <div class="calculator-heading">Calculator</div>
+      <div class="calculator-heading">Optional Calculator</div>
 
       <div class="calculator-grid">
         <section class="calculator-card" aria-label="Pay by kilowatt hour calculator">
@@ -1593,7 +1613,7 @@
       const width = window.visualViewport ? window.visualViewport.width : window.innerWidth;
       const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       const aspect = height > 0 ? width / height : 0;
-      const shouldRotate = aspect > 1.80;
+      const shouldRotate = aspect > 1.80 && height < 550;
       const overlay = document.querySelector('.rotate-portrait-overlay');
       if (overlay) {
         overlay.classList.toggle('show', shouldRotate);
@@ -1746,6 +1766,7 @@
     }
 
     applyViewportScale();
+    updateRotateOverlay();
     window.addEventListener('resize', scheduleViewportScale, { passive: true });
     window.addEventListener('resize', updateRotateOverlay, { passive: true });
     if (window.visualViewport) {
@@ -1755,7 +1776,10 @@
         }
       }, { passive: true });
     }
-    window.addEventListener('orientationchange', scheduleViewportScale, { passive: true });
+    window.addEventListener('orientationchange', () => {
+      scheduleViewportScale();
+      requestAnimationFrame(updateRotateOverlay);
+    }, { passive: true });
 
     /* =========================
        AUTHORIZATION
@@ -1846,6 +1870,14 @@
     }
 
     function requestControlCenterAccess() {
+      const hasEstablishedAuth = Boolean(currentToken && currentRole !== 'none');
+
+      if (!hasEstablishedAuth) {
+        setControlCenterUnlocked(true);
+        openControlCenter();
+        return;
+      }
+
       if (isControlCenterUnlocked()) {
         openControlCenter();
         return;
@@ -2046,7 +2078,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.64';
+      els.revisionBox.textContent = 'V1.66';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
