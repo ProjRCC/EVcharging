@@ -620,9 +620,9 @@
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      background: rgba(85, 85, 85, 0.96);
-      backdrop-filter: blur(0.34rem);
-      -webkit-backdrop-filter: blur(0.34rem);
+      background: var(--gray-6);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
       touch-action: none;
       opacity: 0;
       visibility: hidden;
@@ -634,6 +634,12 @@
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
+    }
+
+    body.hours-picker-open .app-shell,
+    body.hours-picker-open .bottom-actions,
+    body.hours-picker-open .status-indicator {
+      pointer-events: none !important;
     }
 
     .hours-picker-box {
@@ -1304,7 +1310,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.78">V1.78</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.79">V1.79</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2159,7 +2165,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.78';
+      els.revisionBox.textContent = 'V1.79';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2484,6 +2490,7 @@
       pickerHours = clampHours(Number.isFinite(current) && current > 0 ? current : rememberedHours());
       paintHoursPicker();
       els.hoursDone.textContent = els.name.value.trim() ? 'Submit' : 'Done';
+      document.body.classList.add('hours-picker-open');
       els.hoursPicker.classList.add('open');
       els.hoursPicker.setAttribute('aria-hidden', 'false');
       requestAnimationFrame(applyHoursPickerSessionScale);
@@ -2496,6 +2503,7 @@
       }
       els.hoursPicker.classList.remove('open');
       els.hoursPicker.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('hours-picker-open');
     }
 
     els.hours.addEventListener('click', openHoursPicker);
