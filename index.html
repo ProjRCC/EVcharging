@@ -1320,7 +1320,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.80">V1.80</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.81">V1.81</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1695,9 +1695,9 @@
         const protectedGap = Math.max(6, rootFont * 0.42);
 
         if (viewName === 'pay') {
-          const payContentEnd = document.querySelector('#payView .pay-choice-after-calculators');
+          const payContentEnd = document.querySelector('#payView .calculator-grid');
           const dock = document.querySelector('#payView .pay-bottom-dock');
-          if (!payContentEnd || !dock) return true;
+          if (!payContentEnd || !dock) return false;
 
           const contentBottom = payContentEnd.getBoundingClientRect().bottom;
           const dockTop = dock.getBoundingClientRect().top;
@@ -2175,7 +2175,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.80';
+      els.revisionBox.textContent = 'V1.81';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
