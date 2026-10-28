@@ -531,7 +531,7 @@
 
 
     .bottom-actions .link-button {
-      background: var(--gray-9);
+      background: var(--gray-8);
       text-align: center;
       line-height: 1.02;
       white-space: normal;
@@ -1300,7 +1300,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.74">V1.74</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.76">V1.76</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1704,7 +1704,7 @@
           window.visualViewport ? window.visualViewport.width : window.innerWidth
         );
         const aspect = viewportWidth / viewportHeight;
-        const submitLimit = aspect > 1.00 ? 0.40 : 0.30;
+        const submitLimit = aspect > 1.00 ? 0.45 : 0.30;
         return submitBottom <= viewportHeight * submitLimit;
       });
     }
@@ -2133,6 +2133,8 @@
         <div>VIEWPORT ${Math.round(m.cssWidth)} × ${Math.round(m.cssHeight)} CSS px</div>
         <div>DPR ${Number(m.dpr || 1).toFixed(2)} • ADJ DPR ${Number(m.adjDPR || 1).toFixed(2)}</div>
         <div>H MULT ${base.toFixed(3)}</div>
+        <div>SAFE SESS ${(Math.max(base, Number(lastFitMetrics.sessionSafe || base)) / base).toFixed(3)}</div>
+        <div>SAFE PAY ${(Math.max(base, Number(lastFitMetrics.paySafe || base)) / base).toFixed(3)}</div>
         <div>SAFE MULT ${safeMultiplier.toFixed(3)}</div>
         <div>APPLIED MULT ${applied.toFixed(3)}</div>
         <div>CSS MAX WIDTH 550 px</div>
@@ -2156,7 +2158,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.74';
+      els.revisionBox.textContent = 'V1.76';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
