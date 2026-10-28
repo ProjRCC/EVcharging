@@ -620,9 +620,10 @@
       align-items: center;
       justify-content: center;
       padding: 1rem;
-      background: rgba(85, 85, 85, 0.84);
-      backdrop-filter: blur(0.28rem);
-      -webkit-backdrop-filter: blur(0.28rem);
+      background: rgba(85, 85, 85, 0.96);
+      backdrop-filter: blur(0.34rem);
+      -webkit-backdrop-filter: blur(0.34rem);
+      touch-action: none;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
@@ -1303,7 +1304,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.77">V1.77</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.78">V1.78</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1418,13 +1419,6 @@
           <div class="calculator-result-label">Amount</div>
           <div id="hoursResult" class="calculator-result">TBD</div>
         </section>
-      </div>
-
-      <div class="pay-warning pay-choice-box pay-choice-after-calculators">
-        <div class="pay-warning-choice">
-          Choose either actual energy used from Tesla/other app or approximate charging time.
-          <span class="info-icon" role="img" aria-label="More information coming later">i</span>
-        </div>
       </div>
 
       <div class="pay-bottom-dock">
@@ -2165,7 +2159,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.77';
+      els.revisionBox.textContent = 'V1.78';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2513,7 +2507,18 @@
       closeHoursPicker(true);
       if (shouldSubmit) submitEntry();
     });
-    els.hoursPicker.addEventListener('click', event => { if (event.target === els.hoursPicker) closeHoursPicker(false); });
+    els.hoursPicker.addEventListener('pointerdown', event => {
+      event.stopPropagation();
+      if (event.target === els.hoursPicker) {
+        event.preventDefault();
+        closeHoursPicker(false);
+      }
+    }, true);
+
+    els.hoursPicker.addEventListener('click', event => {
+      event.stopPropagation();
+      if (event.target === els.hoursPicker) closeHoursPicker(false);
+    }, true);
 
 
     function coverMutationCurtain() {
