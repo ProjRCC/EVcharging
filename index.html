@@ -637,8 +637,11 @@
 
     .hours-picker-box {
       width: min(92vw, 22rem);
+      max-width: 450px;
       padding: 1rem;
       border-radius: 1rem;
+      transform: scale(var(--hours-picker-session-scale, 1));
+      transform-origin: center center;
       background: rgba(102, 102, 102, 0.97);
       backdrop-filter: blur(0.42rem);
       -webkit-backdrop-filter: blur(0.42rem);
@@ -663,7 +666,7 @@
 
     .hours-picker-step,
     .hours-picker-value {
-      min-height: 3.4rem;
+      min-height: 4.1rem;
       border-radius: 0.78rem;
       border: 1px solid #6a6a6a;
       display: flex;
@@ -689,7 +692,7 @@
     .hours-picker-done {
       width: 100%;
       margin-top: 0.75rem;
-      min-height: 3rem;
+      min-height: 3.4rem;
     }
 
     .payment-method-or {
@@ -1300,7 +1303,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.76">V1.76</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.77">V1.77</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1838,6 +1841,10 @@
         if (active === els.kwhInput || active === els.payHoursInput) {
           requestAnimationFrame(() => revealPayAmount(active));
         }
+
+        if (els.hoursPicker.classList.contains('open')) {
+          requestAnimationFrame(applyHoursPickerSessionScale);
+        }
       }, { passive: true });
     }
     window.addEventListener('orientationchange', () => {
@@ -2158,7 +2165,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.76';
+      els.revisionBox.textContent = 'V1.77';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2453,6 +2460,30 @@
       els.hoursPlus.disabled = pickerHours >= MAX_HOURS;
     }
 
+    function applyHoursPickerSessionScale() {
+      const box = els.hoursPicker.querySelector('.hours-picker-box');
+      if (!box) return;
+
+      const metrics = getViewportMetrics();
+      const base = Math.max(1, Number(metrics.heightMultiplier || 1));
+      const applied = Math.max(base, Number(lastFitMetrics.applied || base));
+      const sessionApplied = Math.max(base, Number(lastFitMetrics.sessionSafe || base));
+      const desiredRatio = Math.max(1, sessionApplied / applied);
+
+      box.style.setProperty('--hours-picker-session-scale', '1');
+      const naturalWidth = Math.max(1, box.getBoundingClientRect().width);
+      const viewportWidth = Math.max(
+        1,
+        window.visualViewport ? window.visualViewport.width : window.innerWidth
+      );
+
+      const widthCapRatio = 450 / naturalWidth;
+      const viewportCapRatio = (viewportWidth * 0.92) / naturalWidth;
+      const popupScale = Math.max(1, Math.min(desiredRatio, widthCapRatio, viewportCapRatio));
+
+      box.style.setProperty('--hours-picker-session-scale', popupScale.toFixed(5));
+    }
+
     function openHoursPicker() {
       restartAutoRefresh();
       const current = parseFloat(String(els.hours.value || '').replace(/[^0-9.\-]/g, ''));
@@ -2461,6 +2492,7 @@
       els.hoursDone.textContent = els.name.value.trim() ? 'Submit' : 'Done';
       els.hoursPicker.classList.add('open');
       els.hoursPicker.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(applyHoursPickerSessionScale);
     }
 
     function closeHoursPicker(commit = false) {
