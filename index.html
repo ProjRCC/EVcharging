@@ -636,6 +636,16 @@
       pointer-events: auto;
     }
 
+    .hours-picker-overlay.shielding {
+      opacity: 0;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .hours-picker-overlay.shielding .hours-picker-box {
+      visibility: hidden;
+    }
+
     body.hours-picker-open .app-shell,
     body.hours-picker-open .bottom-actions,
     body.hours-picker-open .status-indicator {
@@ -1310,7 +1320,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.79">V1.79</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.80">V1.80</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2165,7 +2175,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.79';
+      els.revisionBox.textContent = 'V1.80';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
@@ -2501,9 +2511,26 @@
         const displayHours = pickerHours.toFixed(1).replace(/\.0$/, '');
         els.hours.value = `${displayHours} Hours`;
       }
-      els.hoursPicker.classList.remove('open');
+      els.hoursPicker.classList.remove('open', 'shielding');
       els.hoursPicker.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('hours-picker-open');
+    }
+
+    let hoursBackdropReleaseTimer = 0;
+
+    function dismissHoursPickerFromBackdrop() {
+      if (!els.hoursPicker.classList.contains('open')) return;
+
+      if (hoursBackdropReleaseTimer) clearTimeout(hoursBackdropReleaseTimer);
+
+      /* Keep the full-screen overlay alive long enough to absorb the complete
+         pointer/click sequence. Only its visuals disappear immediately. */
+      els.hoursPicker.classList.add('shielding');
+
+      hoursBackdropReleaseTimer = window.setTimeout(() => {
+        hoursBackdropReleaseTimer = 0;
+        closeHoursPicker(false);
+      }, 320);
     }
 
     els.hours.addEventListener('click', openHoursPicker);
@@ -2516,17 +2543,19 @@
       if (shouldSubmit) submitEntry();
     });
     els.hoursPicker.addEventListener('pointerdown', event => {
-      event.stopPropagation();
-      if (event.target === els.hoursPicker) {
-        event.preventDefault();
-        closeHoursPicker(false);
-      }
+      if (event.target !== els.hoursPicker) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      dismissHoursPickerFromBackdrop();
     }, true);
 
-    els.hoursPicker.addEventListener('click', event => {
-      event.stopPropagation();
-      if (event.target === els.hoursPicker) closeHoursPicker(false);
-    }, true);
+    ['pointerup', 'click', 'touchend'].forEach(type => {
+      els.hoursPicker.addEventListener(type, event => {
+        if (event.target !== els.hoursPicker && !els.hoursPicker.classList.contains('shielding')) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, true);
+    });
 
 
     function coverMutationCurtain() {
