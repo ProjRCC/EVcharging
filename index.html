@@ -1346,7 +1346,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.83">V1.83</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.84">V1.84</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1411,7 +1411,7 @@
           href="https://wa.me/qr/VXCAX53DGUGMJ1?s=v"
           target="_blank"
           rel="noopener noreferrer">
-          REQUEST LOCK<br>CODE
+          REQUEST<br>LOCK CODE
         </a>
         <button id="payButton" class="action-button" type="button">Pay</button>
       </div>
@@ -1423,7 +1423,7 @@
 
       <div class="pay-warning pay-honor-box">
         <div class="pay-intro">
-          <span class="pay-intro-primary">CHARGING/PAYMENT BASED ON HONOR SYSTEM.</span>
+          <span class="pay-intro-primary">PAYMENT BASED ON HONOR SYSTEM.</span>
           <span class="pay-intro-secondary">Pay via Venmo or PayPal.</span>
         </div>
         <strong>FAILURE TO PAY WILL RESULT IN SUSPENSION OF CHARGER ACCESS.</strong>
@@ -2204,7 +2204,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.83';
+      els.revisionBox.textContent = 'V1.84';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
