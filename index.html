@@ -1355,7 +1355,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.85">V1.85</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.86">V1.86</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1727,6 +1727,115 @@
       return result;
     }
 
+    function singleLineTextFits(element, textOverride = null) {
+      if (!element) return false;
+
+      const style = getComputedStyle(element);
+      const text = String(
+        textOverride !== null
+          ? textOverride
+          : (element.value || element.getAttribute('placeholder') || element.textContent || '')
+      ).trim();
+
+      if (!text) return true;
+
+      const canvas = singleLineTextFits._canvas || (singleLineTextFits._canvas = document.createElement('canvas'));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return true;
+
+      ctx.font = style.font || [
+        style.fontStyle,
+        style.fontVariant,
+        style.fontWeight,
+        style.fontSize + '/' + style.lineHeight,
+        style.fontFamily
+      ].join(' ');
+
+      const paddingLeft = parseFloat(style.paddingLeft) || 0;
+      const paddingRight = parseFloat(style.paddingRight) || 0;
+      const available = Math.max(0, element.clientWidth - paddingLeft - paddingRight);
+      const needed = ctx.measureText(text).width + 1;
+
+      return needed <= available;
+    }
+
+    function horizontallyContained(element, parent = null) {
+      if (!element) return false;
+
+      const rect = element.getBoundingClientRect();
+      const outer = parent ? parent.getBoundingClientRect() : {
+        left: 0,
+        right: Math.max(
+          1,
+          window.visualViewport ? window.visualViewport.width : window.innerWidth
+        )
+      };
+
+      return rect.left >= outer.left - 1 && rect.right <= outer.right + 1;
+    }
+
+    function homeHorizontalFitPasses() {
+      const requestButton = document.querySelector('#passwordButton');
+      const lockCodeLine = requestButton ? requestButton.querySelector('.lock-code-line') : null;
+      const payButton = document.querySelector('#payButton');
+      const status = document.querySelector('#statusIndicator');
+
+      if (!requestButton || !lockCodeLine || !payButton || !status) return false;
+
+      return (
+        singleLineTextFits(requestButton, 'REQUEST') &&
+        singleLineTextFits(requestButton, 'LOCK CODE') &&
+        horizontallyContained(lockCodeLine, requestButton) &&
+        singleLineTextFits(payButton, 'PAY') &&
+        horizontallyContained(requestButton) &&
+        horizontallyContained(payButton) &&
+        horizontallyContained(status)
+      );
+    }
+
+    function payHorizontalFitPasses() {
+      const honorBox = document.querySelector('#payView .pay-honor-box');
+      const primary = document.querySelector('#payView .pay-intro-primary');
+      const secondary = document.querySelector('#payView .pay-intro-secondary');
+      const titles = [...document.querySelectorAll('#payView .calculator-title')];
+      const rates = [...document.querySelectorAll('#payView .calculator-rate')];
+      const inputs = [...document.querySelectorAll('#payView .calculator-input')];
+      const results = [...document.querySelectorAll('#payView .calculator-result')];
+      const paymentNames = [...document.querySelectorAll('#payView .payment-name')];
+      const homeButton = document.querySelector('#payView .home-button');
+
+      if (!honorBox || !primary || !secondary || !homeButton) return false;
+
+      if (!horizontallyContained(honorBox)) return false;
+      if (!singleLineTextFits(primary)) return false;
+      if (!singleLineTextFits(secondary)) return false;
+
+      for (const title of titles) {
+        if (!singleLineTextFits(title)) return false;
+      }
+
+      for (const rate of rates) {
+        if (!singleLineTextFits(rate)) return false;
+      }
+
+      for (const input of inputs) {
+        const sample = input.value || input.getAttribute('placeholder') || '';
+        if (!singleLineTextFits(input, sample)) return false;
+      }
+
+      for (const result of results) {
+        if (!singleLineTextFits(result)) return false;
+      }
+
+      for (const name of paymentNames) {
+        if (!singleLineTextFits(name)) return false;
+      }
+
+      if (!singleLineTextFits(homeButton, 'HOME')) return false;
+
+      return true;
+    }
+
     function isSafeAtMultiplier(viewName, candidateMultiplier) {
       return withMeasuredView(viewName, candidateMultiplier, () => {
         const rootFont = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -1739,11 +1848,13 @@
 
           const contentBottom = payContentEnd.getBoundingClientRect().bottom;
           const dockTop = dock.getBoundingClientRect().top;
-          return contentBottom + protectedGap <= dockTop;
+          const verticalFit = contentBottom + protectedGap <= dockTop;
+
+          return verticalFit && payHorizontalFitPasses();
         }
 
         const submitButton = els.submit;
-        if (!submitButton) return true;
+        if (!submitButton) return false;
 
         const viewportHeight = Math.max(
           1,
@@ -1756,7 +1867,9 @@
         );
         const aspect = viewportWidth / viewportHeight;
         const submitLimit = aspect > 1.00 ? 0.45 : 0.30;
-        return submitBottom <= viewportHeight * submitLimit;
+        const verticalFit = submitBottom <= viewportHeight * submitLimit;
+
+        return verticalFit && homeHorizontalFitPasses();
       });
     }
 
@@ -2213,7 +2326,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.85';
+      els.revisionBox.textContent = 'V1.86';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
