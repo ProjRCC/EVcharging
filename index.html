@@ -808,7 +808,7 @@
 
     .pay-intro-primary {
       white-space: nowrap;
-      font-size: 1.02rem;
+      font-size: min(1.02rem, 5.15cqw);
     }
 
     .pay-intro-secondary {
@@ -818,6 +818,7 @@
     .pay-warning {
       width: 100%;
       max-width: var(--content-max);
+      container-type: inline-size;
       margin: 0 auto 0.52rem;
       padding: 0.62rem 0.72rem;
       border-radius: 0.72rem;
@@ -895,6 +896,7 @@
     }
 
     .calculator-card {
+      container-type: inline-size;
       min-width: 0;
       padding: 0.8rem 0.58rem 0.9rem;
       border-radius: 0.88rem;
@@ -930,6 +932,10 @@
       font-size: 1.05rem;
       font-weight: 900;
       text-align: center;
+    }
+
+    #kwhInput {
+      font-size: min(1.05rem, 11.4cqw);
     }
 
     .calculator-input.preloaded {
@@ -1366,7 +1372,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.88">V1.88</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.89">V1.89</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2356,7 +2362,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.88';
+      els.revisionBox.textContent = 'V1.89';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
