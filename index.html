@@ -544,14 +544,24 @@
       background: var(--gray-8);
       text-align: center;
       line-height: 1.02;
-      white-space: normal;
+      white-space: nowrap;
       font-size: 0.88rem;
       padding-left: 0.18rem;
       padding-right: 0.18rem;
     }
 
-    .bottom-actions .link-button .lock-code-line {
+    #passwordButton {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      gap: 0.06rem;
+    }
+
+    #passwordButton .request-line,
+    #passwordButton .lock-code-line {
+      display: block;
+      width: 100%;
       white-space: nowrap;
+      text-align: center;
     }
 
     #payButton,
@@ -1355,7 +1365,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.86">V1.86</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.87">V1.87</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1420,7 +1430,8 @@
           href="https://wa.me/qr/VXCAX53DGUGMJ1?s=v"
           target="_blank"
           rel="noopener noreferrer">
-          REQUEST<br><span class="lock-code-line">LOCK CODE</span>
+          <span class="request-line">REQUEST</span>
+          <span class="lock-code-line">LOCK CODE</span>
         </a>
         <button id="payButton" class="action-button" type="button">Pay</button>
       </div>
@@ -1727,7 +1738,7 @@
       return result;
     }
 
-    function singleLineTextFits(element, textOverride = null) {
+    function renderedSingleLineTextFits(element, textOverride = null) {
       if (!element) return false;
 
       const style = getComputedStyle(element);
@@ -1739,24 +1750,36 @@
 
       if (!text) return true;
 
-      const canvas = singleLineTextFits._canvas || (singleLineTextFits._canvas = document.createElement('canvas'));
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return true;
+      const probe = document.createElement('span');
+      probe.textContent = text;
+      probe.style.position = 'fixed';
+      probe.style.left = '-10000px';
+      probe.style.top = '-10000px';
+      probe.style.visibility = 'hidden';
+      probe.style.pointerEvents = 'none';
+      probe.style.whiteSpace = 'nowrap';
+      probe.style.fontFamily = style.fontFamily;
+      probe.style.fontSize = style.fontSize;
+      probe.style.fontWeight = style.fontWeight;
+      probe.style.fontStyle = style.fontStyle;
+      probe.style.fontVariant = style.fontVariant;
+      probe.style.letterSpacing = style.letterSpacing;
+      probe.style.textTransform = style.textTransform;
+      document.body.appendChild(probe);
 
-      ctx.font = style.font || [
-        style.fontStyle,
-        style.fontVariant,
-        style.fontWeight,
-        style.fontSize + '/' + style.lineHeight,
-        style.fontFamily
-      ].join(' ');
+      const needed = probe.getBoundingClientRect().width;
+      probe.remove();
 
       const paddingLeft = parseFloat(style.paddingLeft) || 0;
       const paddingRight = parseFloat(style.paddingRight) || 0;
       const available = Math.max(0, element.clientWidth - paddingLeft - paddingRight);
-      const needed = ctx.measureText(text).width + 1;
 
-      return needed <= available;
+      return needed <= available + 0.5;
+    }
+
+    function elementHasHorizontalOverflow(element) {
+      if (!element) return true;
+      return element.scrollWidth > element.clientWidth + 1;
     }
 
     function horizontallyContained(element, parent = null) {
@@ -1776,17 +1799,18 @@
 
     function homeHorizontalFitPasses() {
       const requestButton = document.querySelector('#passwordButton');
+      const requestLine = requestButton ? requestButton.querySelector('.request-line') : null;
       const lockCodeLine = requestButton ? requestButton.querySelector('.lock-code-line') : null;
       const payButton = document.querySelector('#payButton');
       const status = document.querySelector('#statusIndicator');
 
-      if (!requestButton || !lockCodeLine || !payButton || !status) return false;
+      if (!requestButton || !requestLine || !lockCodeLine || !payButton || !status) return false;
 
       return (
-        singleLineTextFits(requestButton, 'REQUEST') &&
-        singleLineTextFits(requestButton, 'LOCK CODE') &&
-        horizontallyContained(lockCodeLine, requestButton) &&
-        singleLineTextFits(payButton, 'PAY') &&
+        renderedSingleLineTextFits(requestLine) &&
+        renderedSingleLineTextFits(lockCodeLine) &&
+        !elementHasHorizontalOverflow(requestButton) &&
+        renderedSingleLineTextFits(payButton, 'PAY') &&
         horizontallyContained(requestButton) &&
         horizontallyContained(payButton) &&
         horizontallyContained(status)
@@ -1797,6 +1821,7 @@
       const honorBox = document.querySelector('#payView .pay-honor-box');
       const primary = document.querySelector('#payView .pay-intro-primary');
       const secondary = document.querySelector('#payView .pay-intro-secondary');
+      const cards = [...document.querySelectorAll('#payView .calculator-card')];
       const titles = [...document.querySelectorAll('#payView .calculator-title')];
       const rates = [...document.querySelectorAll('#payView .calculator-rate')];
       const inputs = [...document.querySelectorAll('#payView .calculator-input')];
@@ -1807,31 +1832,35 @@
       if (!honorBox || !primary || !secondary || !homeButton) return false;
 
       if (!horizontallyContained(honorBox)) return false;
-      if (!singleLineTextFits(primary)) return false;
-      if (!singleLineTextFits(secondary)) return false;
+      if (elementHasHorizontalOverflow(primary) || !renderedSingleLineTextFits(primary)) return false;
+      if (!renderedSingleLineTextFits(secondary)) return false;
+
+      for (const card of cards) {
+        if (!horizontallyContained(card)) return false;
+      }
 
       for (const title of titles) {
-        if (!singleLineTextFits(title)) return false;
+        if (!renderedSingleLineTextFits(title)) return false;
       }
 
       for (const rate of rates) {
-        if (!singleLineTextFits(rate)) return false;
+        if (!renderedSingleLineTextFits(rate)) return false;
       }
 
       for (const input of inputs) {
         const sample = input.value || input.getAttribute('placeholder') || '';
-        if (!singleLineTextFits(input, sample)) return false;
+        if (!renderedSingleLineTextFits(input, sample)) return false;
       }
 
       for (const result of results) {
-        if (!singleLineTextFits(result)) return false;
+        if (!renderedSingleLineTextFits(result)) return false;
       }
 
       for (const name of paymentNames) {
-        if (!singleLineTextFits(name)) return false;
+        if (!renderedSingleLineTextFits(name)) return false;
       }
 
-      if (!singleLineTextFits(homeButton, 'HOME')) return false;
+      if (!renderedSingleLineTextFits(homeButton, 'HOME')) return false;
 
       return true;
     }
@@ -2326,7 +2355,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.86';
+      els.revisionBox.textContent = 'V1.87';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
