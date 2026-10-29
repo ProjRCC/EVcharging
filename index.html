@@ -566,7 +566,8 @@
 
     #payButton,
     .home-button {
-      font-size: 1.16rem;
+      font-size: 1.20rem;
+      font-weight: 900;
       -webkit-text-stroke: 0.24px currentColor;
     }
 
@@ -1365,7 +1366,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.87">V1.87</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.88">V1.88</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1431,7 +1432,7 @@
           target="_blank"
           rel="noopener noreferrer">
           <span class="request-line">REQUEST</span>
-          <span class="lock-code-line">LOCK CODE</span>
+          <span class="lock-code-line">CODE</span>
         </a>
         <button id="payButton" class="action-button" type="button">Pay</button>
       </div>
@@ -1808,7 +1809,7 @@
 
       return (
         renderedSingleLineTextFits(requestLine) &&
-        renderedSingleLineTextFits(lockCodeLine) &&
+        renderedSingleLineTextFits(lockCodeLine, 'CODE') &&
         !elementHasHorizontalOverflow(requestButton) &&
         renderedSingleLineTextFits(payButton, 'PAY') &&
         horizontallyContained(requestButton) &&
@@ -2355,7 +2356,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.87';
+      els.revisionBox.textContent = 'V1.88';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
