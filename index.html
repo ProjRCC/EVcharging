@@ -173,6 +173,7 @@
       color: #ffffff;
       font-size: 1.78rem;
       font-weight: 900;
+      -webkit-text-stroke: 0.35px currentColor;
       line-height: 1.08;
       text-align: center;
     }
@@ -307,6 +308,7 @@
       max-width: 8rem;
       min-height: 2.86rem;
       padding: 0.78rem 0.7rem;
+      -webkit-text-stroke: 0.16px currentColor;
     }
 
 
@@ -548,6 +550,12 @@
       padding-right: 0.3rem;
     }
 
+    #payButton,
+    .home-button {
+      font-size: 1.16rem;
+      -webkit-text-stroke: 0.24px currentColor;
+    }
+
     body.keyboard-open .bottom-actions {
       display: none !important;
     }
@@ -776,6 +784,16 @@
       font-weight: 600;
       line-height: 1.35;
       text-align: center;
+    }
+
+    .pay-intro-primary,
+    .pay-intro-secondary {
+      display: block;
+    }
+
+    .pay-intro-primary {
+      white-space: nowrap;
+      font-size: clamp(0.72rem, 2.55vw, 0.95rem);
     }
 
     .pay-warning {
@@ -1328,7 +1346,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.82">V1.82</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.83">V1.83</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1393,7 +1411,7 @@
           href="https://wa.me/qr/VXCAX53DGUGMJ1?s=v"
           target="_blank"
           rel="noopener noreferrer">
-          Request Lock Code
+          REQUEST LOCK<br>CODE
         </a>
         <button id="payButton" class="action-button" type="button">Pay</button>
       </div>
@@ -1404,7 +1422,10 @@
       <h1>PAYMENT</h1>
 
       <div class="pay-warning pay-honor-box">
-        <div class="pay-intro">Charging/Payment based on honor system.<br>Pay via Venmo or PayPal.</div>
+        <div class="pay-intro">
+          <span class="pay-intro-primary">CHARGING/PAYMENT BASED ON HONOR SYSTEM.</span>
+          <span class="pay-intro-secondary">Pay via Venmo or PayPal.</span>
+        </div>
         <strong>FAILURE TO PAY WILL RESULT IN SUSPENSION OF CHARGER ACCESS.</strong>
         Lock codes may be changed to enforce suspension.
       </div>
@@ -2183,7 +2204,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.82';
+      els.revisionBox.textContent = 'V1.83';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
