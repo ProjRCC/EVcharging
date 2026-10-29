@@ -1372,7 +1372,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.89">V1.89</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.90">V1.90</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -1886,7 +1886,7 @@
           const dockTop = dock.getBoundingClientRect().top;
           const verticalFit = contentBottom + protectedGap <= dockTop;
 
-          return verticalFit && payHorizontalFitPasses();
+          return verticalFit;
         }
 
         const submitButton = els.submit;
@@ -2362,7 +2362,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.89';
+      els.revisionBox.textContent = 'V1.90';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
