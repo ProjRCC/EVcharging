@@ -26,6 +26,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <style>
+    @font-face {
+      font-family: 'Gotham';
+      src: url('./GothamBook.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
     :root {
       --gray-2: #d7d7d7;
       --gray-6: #555555;
@@ -59,7 +67,7 @@
 
     html {
       background: var(--gray-6);
-      font-family: 'Roboto', Arial, sans-serif;
+      font-family: 'Gotham', Arial, sans-serif;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
@@ -70,7 +78,7 @@
       min-height: 100dvh;
       background: var(--gray-6);
       color: var(--text);
-      font-family: 'Roboto', Arial, sans-serif;
+      font-family: 'Gotham', Arial, sans-serif;
       overflow-x: hidden;
     }
 
@@ -1320,7 +1328,7 @@
   <div id="viewCurtain" class="covered" aria-hidden="false"></div>
 
   <main class="app-shell">
-    <div class="revision-box" id="revisionBox" title="EV Charging V1.81">V1.81</div>
+    <div class="revision-box" id="revisionBox" title="EV Charging V1.82">V1.82</div>
 
     <!-- HOME -->
     <section id="homeView" class="view" aria-label="EV charging status">
@@ -2175,7 +2183,7 @@
       els.payButton.textContent = isMaster ? 'Delete All' : 'Pay';
       els.payButton.classList.toggle('master-delete-mode', isMaster);
       els.payButton.setAttribute('aria-label', isMaster ? 'Delete all charging sessions' : 'Pay for charging');
-      els.revisionBox.textContent = 'V1.81';
+      els.revisionBox.textContent = 'V1.82';
       els.revisionBox.classList.add('master-tappable');
       els.revisionBox.setAttribute('aria-label', 'Open Control Center');
       renderTable();
